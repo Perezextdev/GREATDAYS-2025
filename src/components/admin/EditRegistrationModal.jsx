@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { X, Save } from 'lucide-react';
-import { supabase } from '../../utils/supabaseClient';
+import { supabase } from '../../lib/supabaseClient';
 
 export default function EditRegistrationModal({ registration, onClose, onUpdate }) {
     const [formData, setFormData] = useState(registration);

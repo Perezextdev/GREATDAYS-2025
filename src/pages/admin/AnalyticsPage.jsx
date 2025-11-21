@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { supabase } from '../../utils/supabaseClient';
+import { supabase } from '../../lib/supabaseClient';
 import {
     calculateRegistrationTrends,
     calculateDailyArrivals,

@@ -90,6 +90,7 @@ function App() {
               <Route path="support" element={<SupportRequestsPage />} />
               <Route path="badges" element={<BadgesPage />} />
               <Route path="analytics" element={<AnalyticsPage />} />
+              <Route path="reports" element={<ReportsPage />} />
               <Route path="settings" element={<AdminSettings />} />
             </Route>
           </Route>

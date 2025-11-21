@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '../../utils/supabaseClient';
+import { supabase } from '../../lib/supabaseClient';
 import {
     MessageSquare,
     CheckCircle,
@@ -136,8 +136,8 @@ export default function SupportRequestsPage() {
                             key={f}
                             onClick={() => setFilter(f)}
                             className={`px-3 py-1.5 rounded-md text-sm font-medium capitalize ${filter === f
-                                    ? 'bg-indigo-600 text-white'
-                                    : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+                                ? 'bg-indigo-600 text-white'
+                                : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
                                 }`}
                         >
                             {f.replace('_', ' ')}

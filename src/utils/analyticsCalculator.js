@@ -25,7 +25,7 @@ export function calculateRegistrationTrends(registrations) {
         const existing = dateMap.get(date) || { date, online: 0, onsite: 0, total: 0 };
 
         existing.total++;
-        if (reg.mode === 'online') {
+        if (reg.participation_mode === 'Online') {
             existing.online++;
             onlineCount++;
         } else {
@@ -79,7 +79,7 @@ export function calculateDailyArrivals(registrations) {
     }
 
     // Filter only onsite registrations
-    const onsiteRegs = registrations.filter(reg => reg.mode === 'onsite');
+    const onsiteRegs = registrations.filter(reg => reg.participation_mode === 'Onsite');
 
     // Group by arrival date
     const dateMap = new Map();
@@ -100,9 +100,9 @@ export function calculateDailyArrivals(registrations) {
 
         existing.count++;
 
-        if (reg.accommodation === 'general') existing.general++;
-        if (reg.accommodation === 'hotel') existing.hotel++;
-        if (reg.location === 'outside_zaria') {
+        if (reg.accommodation_type === 'General') existing.general++;
+        if (reg.accommodation_type === 'Hotel') existing.hotel++;
+        if (reg.location_type === 'Outside Zaria') {
             existing.outsideZaria++;
             existing.withMeals++;
         } else {
@@ -145,7 +145,7 @@ export function calculateMealRequirements(registrations) {
 
     // Only count onsite + outside_zaria attendees
     const mealEligible = registrations.filter(reg =>
-        reg.mode === 'onsite' && reg.location === 'outside_zaria'
+        reg.participation_mode === 'Onsite' && reg.location_type === 'Outside Zaria'
     );
 
     // Event dates
@@ -210,10 +210,10 @@ export function calculateAccommodationStats(registrations) {
         };
     }
 
-    const onsiteRegs = registrations.filter(reg => reg.mode === 'onsite');
+    const onsiteRegs = registrations.filter(reg => reg.participation_mode === 'Onsite');
 
-    const generalRequests = onsiteRegs.filter(reg => reg.accommodation === 'general').length;
-    const hotelRequests = onsiteRegs.filter(reg => reg.accommodation === 'hotel').length;
+    const generalRequests = onsiteRegs.filter(reg => reg.accommodation_type === 'General').length;
+    const hotelRequests = onsiteRegs.filter(reg => reg.accommodation_type === 'Hotel').length;
 
     // Calculate nightly occupancy
     const eventStart = new Date('2025-04-14');
@@ -237,8 +237,8 @@ export function calculateAccommodationStats(registrations) {
 
         nightlyOccupancy.push({
             date: dateStr,
-            general: occupants.filter(r => r.accommodation === 'general').length,
-            hotel: occupants.filter(r => r.accommodation === 'hotel').length,
+            general: occupants.filter(r => r.accommodation_type === 'General').length,
+            hotel: occupants.filter(r => r.accommodation_type === 'Hotel').length,
             total: occupants.length
         });
     });
@@ -359,9 +359,9 @@ export function calculateUnitDistribution(registrations) {
     const unitMap = new Map();
 
     registrations.forEach(reg => {
-        if (!reg.unit) return;
-        const count = unitMap.get(reg.unit) || 0;
-        unitMap.set(reg.unit, count + 1);
+        if (!reg.church_unit) return;
+        const count = unitMap.get(reg.church_unit) || 0;
+        unitMap.set(reg.church_unit, count + 1);
     });
 
     const units = Array.from(unitMap.entries())
@@ -393,13 +393,13 @@ export function calculateModeLocationStats(registrations) {
         };
     }
 
-    const onlineCount = registrations.filter(reg => reg.mode === 'online').length;
-    const onsiteCount = registrations.filter(reg => reg.mode === 'onsite').length;
+    const onlineCount = registrations.filter(reg => reg.participation_mode === 'Online').length;
+    const onsiteCount = registrations.filter(reg => reg.participation_mode === 'Onsite').length;
 
     // Location only applies to onsite
-    const onsiteRegs = registrations.filter(reg => reg.mode === 'onsite');
-    const withinZariaCount = onsiteRegs.filter(reg => reg.location === 'within_zaria').length;
-    const outsideZariaCount = onsiteRegs.filter(reg => reg.location === 'outside_zaria').length;
+    const onsiteRegs = registrations.filter(reg => reg.participation_mode === 'Onsite');
+    const withinZariaCount = onsiteRegs.filter(reg => reg.location_type === 'Within Zaria').length;
+    const outsideZariaCount = onsiteRegs.filter(reg => reg.location_type === 'Outside Zaria').length;
 
     const total = registrations.length;
 

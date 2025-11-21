@@ -1,5 +1,5 @@
 import QRCode from 'qrcode';
-import { supabase } from './supabaseClient';
+import { supabase } from '../lib/supabaseClient';
 
 /**
  * Generate next sequential badge number
@@ -32,14 +32,14 @@ export async function generateBadgeNumber() {
  * Check if registration qualifies for badge generation
  */
 export function shouldGenerateBadge(registration) {
-    return registration.mode === 'onsite';
+    return registration.participation_mode === 'Onsite';
 }
 
 /**
  * Check if attendee should receive meal tickets
  */
 export function shouldIncludeMeals(registration) {
-    return registration.mode === 'onsite' && registration.location === 'outside_zaria';
+    return registration.participation_mode === 'Onsite' && registration.location_type === 'Outside Zaria';
 }
 
 /**
@@ -128,13 +128,13 @@ export async function createBadge(registration) {
         full_name,
         title,
         church_ministry,
-        unit,
+        church_unit,
         branch,
         nationality,
-        mode,
-        location,
+        participation_mode,
+        location_type,
         email,
-        profile_photo,
+        profile_photo_url,
         is_member,
         id
     } = registration;
@@ -148,13 +148,13 @@ export async function createBadge(registration) {
         registration_id: id,
         full_name,
         email,
-        mode: mode?.toLowerCase(),
+        mode: participation_mode?.toLowerCase(),
         meals: mealsIncluded
     };
     const qrCodeUrl = await generateQRCode(qrData);
 
     // Create profile image or initials
-    const profileImageUrl = profile_photo || createInitialsAvatar(full_name, accentColor);
+    const profileImageUrl = profile_photo_url || createInitialsAvatar(full_name, accentColor);
 
     // Create badge HTML
     const badgeHTML = `
@@ -265,7 +265,7 @@ export async function createBadge(registration) {
                     font-size: 18px;
                     font-weight: 700;
                     margin-bottom: 8px;
-                ">${unit}</div>
+                ">${church_unit}</div>
 
                 <!-- Branch (if member) -->
                 ${is_member && branch ? `<div style="
@@ -315,12 +315,12 @@ export async function createBadge(registration) {
                     <div style="
                         display: inline-block;
                         padding: 10px 18px;
-                        background: ${location === 'outside_zaria' ? '#3b82f6' : '#94a3b8'};
+                        background: ${location_type === 'Outside Zaria' ? '#3b82f6' : '#94a3b8'};
                         color: white;
                         border-radius: 12px;
                         font-size: 16px;
                         font-weight: 700;
-                    ">${location === 'outside_zaria' ? '🏨 Outside Zaria' : '🏠 Within Zaria'}</div>
+                    ">${location_type === 'Outside Zaria' ? '🏨 Outside Zaria' : '🏠 Within Zaria'}</div>
                 </div>
 
                 <!-- Center: QR Code -->
@@ -491,7 +491,7 @@ export async function generateAndSaveBadge(registration) {
                 badge_number: badgeNumber,
                 badge_url: badgeUrl,
                 badge_generated: true,
-                meals_included: mealsIncluded
+                meal_ticket_issued: mealsIncluded
             })
             .eq('id', registration.id);
 
@@ -548,7 +548,7 @@ export async function regenerateBadge(registration) {
             .from('registrations')
             .update({
                 badge_url: `${badgeUrl}?t=${Date.now()}`,
-                meals_included: mealsIncluded
+                meal_ticket_issued: mealsIncluded
             })
             .eq('id', registration.id);
 

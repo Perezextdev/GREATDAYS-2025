@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { supabase } from '../../utils/supabaseClient';
+import { supabase } from '../../lib/supabaseClient';
 import {
     Users,
     Wifi,
@@ -17,11 +17,10 @@ import {
     PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip, Legend,
     BarChart, Bar, XAxis, YAxis, CartesianGrid
 } from 'recharts';
-import { exportToExcel } from '../../utils/excelExport';
-
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d'];
+import { useNavigate } from 'react-router-dom';
 
 export default function AdminDashboard() {
+    const navigate = useNavigate();
     const [loading, setLoading] = useState(true);
     const [metrics, setMetrics] = useState({
         totalRegistrations: 0,

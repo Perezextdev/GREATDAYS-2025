@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { supabase } from '../../utils/supabaseClient';
+import { supabase } from '../../lib/supabaseClient';
 import {
     generateAndSaveBadge,
     regenerateBadge,
@@ -43,7 +43,7 @@ const BadgesPage = () => {
             const { data, error } = await supabase
                 .from('registrations')
                 .select('*')
-                .eq('mode', 'onsite')
+                .eq('participation_mode', 'Onsite')
                 .order('created_at', { ascending: false });
 
             if (error) throw error;
@@ -66,16 +66,16 @@ const BadgesPage = () => {
         const branchMatch = filters.branch === 'all' || badge.branch === filters.branch;
 
         // Unit filter
-        const unitMatch = filters.unit === 'all' || badge.unit === filters.unit;
+        const unitMatch = filters.unit === 'all' || badge.church_unit === filters.unit;
 
         // Location filter
-        const locationMatch = filters.location === 'all' || badge.location === filters.location;
+        const locationMatch = filters.location === 'all' || badge.location_type === filters.location;
 
         // Meal ticket filter
         const mealMatch =
             filters.mealTicket === 'all' ||
-            (filters.mealTicket === 'with' && badge.meals_included) ||
-            (filters.mealTicket === 'without' && !badge.meals_included);
+            (filters.mealTicket === 'with' && badge.meal_ticket_issued) ||
+            (filters.mealTicket === 'without' && !badge.meal_ticket_issued);
 
         // Print status filter
         const printMatch =
@@ -88,14 +88,14 @@ const BadgesPage = () => {
     // Calculate stats
     const stats = {
         total: filteredBadges.filter(b => b.badge_generated).length,
-        withMeals: filteredBadges.filter(b => b.meals_included).length,
-        withoutMeals: filteredBadges.filter(b => b.badge_generated && !b.meals_included).length,
+        withMeals: filteredBadges.filter(b => b.meal_ticket_issued).length,
+        withoutMeals: filteredBadges.filter(b => b.badge_generated && !b.meal_ticket_issued).length,
         pendingPrint: filteredBadges.filter(b => b.print_status === 'pending').length
     };
 
     // Get unique values for filters
     const uniqueBranches = [...new Set(registrations.map(r => r.branch).filter(Boolean))];
-    const uniqueUnits = [...new Set(registrations.map(r => r.unit).filter(Boolean))];
+    const uniqueUnits = [...new Set(registrations.map(r => r.church_unit).filter(Boolean))];
 
     const handleGenerateBadge = async (registration) => {
         try {
@@ -146,10 +146,10 @@ const BadgesPage = () => {
                 badgesToDownload = filteredBadges.filter(b => selectedIds.includes(b.id) && b.badge_generated);
                 break;
             case 'meals':
-                badgesToDownload = filteredBadges.filter(b => b.badge_generated && b.meals_included);
+                badgesToDownload = filteredBadges.filter(b => b.badge_generated && b.meal_ticket_issued);
                 break;
             case 'no-meals':
-                badgesToDownload = filteredBadges.filter(b => b.badge_generated && !b.meals_included);
+                badgesToDownload = filteredBadges.filter(b => b.badge_generated && !b.meal_ticket_issued);
                 break;
             default:
                 return;
@@ -289,8 +289,8 @@ const BadgesPage = () => {
                             className="px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                         >
                             <option value="all">All Locations</option>
-                            <option value="within_zaria">Within Zaria</option>
-                            <option value="outside_zaria">Outside Zaria</option>
+                            <option value="Within Zaria">Within Zaria</option>
+                            <option value="Outside Zaria">Outside Zaria</option>
                         </select>
 
                         {/* Meal Ticket Filter */}
@@ -428,18 +428,18 @@ const BadgesPage = () => {
                                             {badge.badge_number || 'Not generated'}
                                         </td>
                                         <td className="px-4 py-3 text-sm text-slate-900">{badge.full_name}</td>
-                                        <td className="px-4 py-3 text-sm text-slate-600">{badge.unit}</td>
+                                        <td className="px-4 py-3 text-sm text-slate-600">{badge.church_unit}</td>
                                         <td className="px-4 py-3 text-sm text-slate-600">{badge.branch || 'N/A'}</td>
                                         <td className="px-4 py-3">
-                                            <span className={`px-2 py-1 text-xs rounded-full ${badge.location === 'outside_zaria'
+                                            <span className={`px-2 py-1 text-xs rounded-full ${badge.location_type === 'Outside Zaria'
                                                 ? 'bg-blue-100 text-blue-700'
                                                 : 'bg-slate-100 text-slate-700'
                                                 }`}>
-                                                {badge.location === 'outside_zaria' ? 'Outside' : 'Within'} Zaria
+                                                {badge.location_type === 'Outside Zaria' ? 'Outside' : 'Within'} Zaria
                                             </span>
                                         </td>
                                         <td className="px-4 py-3">
-                                            {badge.meals_included ? (
+                                            {badge.meal_ticket_issued ? (
                                                 <Check className="w-5 h-5 text-green-600" />
                                             ) : (
                                                 <X className="w-5 h-5 text-slate-400" />
@@ -561,7 +561,7 @@ const BadgesPage = () => {
                                 </div>
                                 <div>
                                     <p className="text-sm text-slate-600">Meal Ticket</p>
-                                    <p className="font-medium">{previewData.meals_included ? 'Yes' : 'No'}</p>
+                                    <p className="font-medium">{previewData.meal_ticket_issued ? 'Yes' : 'No'}</p>
                                 </div>
                             </div>
 

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { supabase } from '../utils/supabaseClient';
+import { supabase } from '../lib/supabaseClient';
 import { Mail, MessageSquare, Send, CheckCircle, AlertCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
 

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '../../utils/supabaseClient';
+import { supabase } from '../../lib/supabaseClient';
 import {
     Check,
     X,
@@ -102,8 +102,8 @@ export default function TestimonialsPage() {
                             key={f}
                             onClick={() => setFilter(f)}
                             className={`px-4 py-2 rounded-md text-sm font-medium capitalize ${filter === f
-                                    ? 'bg-indigo-600 text-white'
-                                    : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+                                ? 'bg-indigo-600 text-white'
+                                : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
                                 }`}
                         >
                             {f}
@@ -157,8 +157,8 @@ export default function TestimonialsPage() {
                                 <div className="mt-4 flex items-center justify-between text-xs text-gray-500">
                                     <span>{new Date(item.created_at).toLocaleDateString()}</span>
                                     <span className={`px-2 py-1 rounded-full font-medium capitalize ${item.status === 'approved' ? 'bg-green-100 text-green-800' :
-                                            item.status === 'rejected' ? 'bg-red-100 text-red-800' :
-                                                'bg-yellow-100 text-yellow-800'
+                                        item.status === 'rejected' ? 'bg-red-100 text-red-800' :
+                                            'bg-yellow-100 text-yellow-800'
                                         }`}>
                                         {item.status}
                                     </span>
