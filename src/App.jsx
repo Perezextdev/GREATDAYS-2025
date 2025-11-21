@@ -48,53 +48,57 @@ function PublicLayout({ children }) {
   );
 }
 
+import { AuthProvider } from './context/AuthContext';
+
 function App() {
   return (
-    <BrowserRouter>
-      <ScrollToTop />
-      <Routes>
-        {/* Public Routes */}
-        <Route path="/" element={
-          <PublicLayout>
-            <Home />
-          </PublicLayout>
-        } />
-        <Route path="/register" element={
-          <PublicLayout>
-            <Register />
-          </PublicLayout>
-        } />
-        <Route path="/submit-testimony" element={
-          <PublicLayout>
-            <SubmitTestimonyPage />
-          </PublicLayout>
-        } />
-        <Route path="/about" element={
-          <PublicLayout>
-            <AboutPage />
-          </PublicLayout>
-        } />
+    <AuthProvider>
+      <BrowserRouter>
+        <ScrollToTop />
+        <Routes>
+          {/* Public Routes */}
+          <Route path="/" element={
+            <PublicLayout>
+              <Home />
+            </PublicLayout>
+          } />
+          <Route path="/register" element={
+            <PublicLayout>
+              <Register />
+            </PublicLayout>
+          } />
+          <Route path="/submit-testimony" element={
+            <PublicLayout>
+              <SubmitTestimonyPage />
+            </PublicLayout>
+          } />
+          <Route path="/about" element={
+            <PublicLayout>
+              <AboutPage />
+            </PublicLayout>
+          } />
 
-        {/* Admin Routes */}
-        <Route path="/admin/login" element={<AdminLoginPage />} />
+          {/* Admin Routes */}
+          <Route path="/admin/login" element={<AdminLoginPage />} />
 
-        <Route path="/admin" element={<ProtectedRoute />}>
-          <Route element={<AdminLayout />}>
-            <Route index element={<Navigate to="/admin/dashboard" replace />} />
-            <Route path="dashboard" element={<AdminDashboard />} />
-            <Route path="registrations" element={<RegistrationsPage />} />
-            <Route path="testimonials" element={<TestimonialsPage />} />
-            <Route path="support" element={<SupportRequestsPage />} />
-            <Route path="badges" element={<BadgesPage />} />
-            <Route path="analytics" element={<AnalyticsPage />} />
-            <Route path="settings" element={<AdminSettings />} />
+          <Route path="/admin" element={<ProtectedRoute />}>
+            <Route element={<AdminLayout />}>
+              <Route index element={<Navigate to="/admin/dashboard" replace />} />
+              <Route path="dashboard" element={<AdminDashboard />} />
+              <Route path="registrations" element={<RegistrationsPage />} />
+              <Route path="testimonials" element={<TestimonialsPage />} />
+              <Route path="support" element={<SupportRequestsPage />} />
+              <Route path="badges" element={<BadgesPage />} />
+              <Route path="analytics" element={<AnalyticsPage />} />
+              <Route path="settings" element={<AdminSettings />} />
+            </Route>
           </Route>
-        </Route>
 
-        {/* Fallback */}
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    </BrowserRouter>
+          {/* Fallback */}
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </BrowserRouter>
+    </AuthProvider>
   );
 }
 

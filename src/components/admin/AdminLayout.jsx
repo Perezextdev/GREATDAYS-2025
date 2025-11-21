@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Link, Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { supabase } from '../../utils/supabaseClient';
+import { useAuth } from '../../context/AuthContext';
 import {
     LayoutDashboard,
     Users,
@@ -17,29 +17,12 @@ import {
 export default function AdminLayout() {
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [userMenuOpen, setUserMenuOpen] = useState(false);
-    const [adminUser, setAdminUser] = useState(null);
+    const { adminProfile, logout } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
 
-    useEffect(() => {
-        getAdminProfile();
-    }, []);
-
-    const getAdminProfile = async () => {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-            const { data } = await supabase
-                .from('admin_users')
-                .select('*')
-                .eq('email', user.email)
-                .single();
-            setAdminUser(data);
-        }
-    };
-
     const handleLogout = async () => {
-        await supabase.auth.signOut();
-        localStorage.removeItem('admin_role');
+        await logout();
         navigate('/admin/login');
     };
 
@@ -79,8 +62,8 @@ export default function AdminLayout() {
                             className="flex items-center space-x-3 focus:outline-none"
                         >
                             <div className="text-right hidden sm:block">
-                                <p className="text-sm font-medium text-gray-900">{adminUser?.full_name || 'Admin'}</p>
-                                <p className="text-xs text-gray-500 capitalize">{adminUser?.role?.replace('_', ' ') || 'Loading...'}</p>
+                                <p className="text-sm font-medium text-gray-900">{adminProfile?.full_name || 'Admin'}</p>
+                                <p className="text-xs text-gray-500 capitalize">{adminProfile?.role?.replace('_', ' ') || 'Loading...'}</p>
                             </div>
                             <div className="h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600">
                                 <User size={20} />
@@ -92,8 +75,8 @@ export default function AdminLayout() {
                         {userMenuOpen && (
                             <div className="absolute right-0 mt-2 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
                                 <div className="px-4 py-2 border-b border-gray-100 sm:hidden">
-                                    <p className="text-sm font-medium text-gray-900">{adminUser?.full_name}</p>
-                                    <p className="text-xs text-gray-500 capitalize">{adminUser?.role}</p>
+                                    <p className="text-sm font-medium text-gray-900">{adminProfile?.full_name}</p>
+                                    <p className="text-xs text-gray-500 capitalize">{adminProfile?.role}</p>
                                 </div>
                                 <button
                                     onClick={handleLogout}
@@ -129,8 +112,8 @@ export default function AdminLayout() {
                                         key={item.name}
                                         to={item.path}
                                         className={`flex items-center rounded-md px-4 py-3 text-sm font-medium transition-colors ${isActive
-                                                ? 'bg-indigo-50 text-indigo-600'
-                                                : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
+                                            ? 'bg-indigo-50 text-indigo-600'
+                                            : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
                                             }`}
                                         onClick={() => setSidebarOpen(false)}
                                     >

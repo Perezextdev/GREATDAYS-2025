@@ -1,9 +1,10 @@
 // src/pages/admin/AdminLoginPage.jsx
 import { useState } from "react";
-import { supabase } from "../../utils/supabaseClient";
+import { useAuth } from "../../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 
 export default function AdminLoginPage() {
+    const { login } = useAuth();
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [remember, setRemember] = useState(false);
@@ -17,31 +18,7 @@ export default function AdminLoginPage() {
         setLoading(true);
         setError("");
         try {
-            // Sign in with Supabase Auth
-            const { data, error: authError } = await supabase.auth.signInWithPassword({
-                email,
-                password,
-            });
-            if (authError) throw authError;
-
-            // Verify admin user exists in admin_users table
-            const { data: adminData, error: adminError } = await supabase
-                .from("admin_users")
-                .select("role")
-                .eq("email", email)
-                .single();
-            if (adminError) throw new Error("User is not an admin");
-
-            // Persist session if remember me
-            if (remember) {
-                await supabase.auth.setPersistence("local");
-            } else {
-                await supabase.auth.setPersistence("session");
-            }
-
-            // Store role in local storage for quick access in ProtectedRoute
-            localStorage.setItem("admin_role", adminData.role);
-
+            await login(email, password);
             navigate("/admin/dashboard");
         } catch (err) {
             console.error(err);
