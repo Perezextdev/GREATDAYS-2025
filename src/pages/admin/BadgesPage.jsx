@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { supabase } from '../../utils/supabase';
+import { supabase } from '../../utils/supabaseClient';
 import {
     generateAndSaveBadge,
     regenerateBadge,
@@ -432,8 +432,8 @@ const BadgesPage = () => {
                                         <td className="px-4 py-3 text-sm text-slate-600">{badge.branch || 'N/A'}</td>
                                         <td className="px-4 py-3">
                                             <span className={`px-2 py-1 text-xs rounded-full ${badge.location === 'outside_zaria'
-                                                    ? 'bg-blue-100 text-blue-700'
-                                                    : 'bg-slate-100 text-slate-700'
+                                                ? 'bg-blue-100 text-blue-700'
+                                                : 'bg-slate-100 text-slate-700'
                                                 }`}>
                                                 {badge.location === 'outside_zaria' ? 'Outside' : 'Within'} Zaria
                                             </span>
@@ -452,8 +452,8 @@ const BadgesPage = () => {
                                             <button
                                                 onClick={() => togglePrintStatus(badge)}
                                                 className={`px-3 py-1 text-xs rounded-full font-medium ${badge.print_status === 'printed'
-                                                        ? 'bg-green-100 text-green-700'
-                                                        : 'bg-orange-100 text-orange-700'
+                                                    ? 'bg-green-100 text-green-700'
+                                                    : 'bg-orange-100 text-orange-700'
                                                     }`}
                                             >
                                                 {badge.print_status === 'printed' ? 'Printed' : 'Pending'}
