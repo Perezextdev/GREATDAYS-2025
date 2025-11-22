@@ -7,7 +7,8 @@ import {
     AlertTriangle,
     Send,
     Trash2,
-    Filter
+    Filter,
+    ArrowLeft
 } from 'lucide-react';
 
 export default function SupportRequestsPage() {
@@ -16,10 +17,18 @@ export default function SupportRequestsPage() {
     const [filter, setFilter] = useState('all'); // all, open, in_progress, resolved
     const [selectedRequest, setSelectedRequest] = useState(null);
     const [replyText, setReplyText] = useState('');
+    const [isMobileView, setIsMobileView] = useState(false);
 
     useEffect(() => {
         fetchRequests();
+        checkMobileView();
+        window.addEventListener('resize', checkMobileView);
+        return () => window.removeEventListener('resize', checkMobileView);
     }, [filter]);
+
+    const checkMobileView = () => {
+        setIsMobileView(window.innerWidth < 768);
+    };
 
     const fetchRequests = async () => {
         try {
@@ -105,6 +114,7 @@ export default function SupportRequestsPage() {
             if (error) throw error;
             setRequests(prev => prev.filter(r => r.id !== id));
             if (selectedRequest?.id === id) setSelectedRequest(null);
+            if (isMobileView) setSelectedRequest(null); // Go back to list on mobile
         } catch (error) {
             console.error('Error deleting request:', error);
         }
@@ -126,16 +136,19 @@ export default function SupportRequestsPage() {
         }
     };
 
+    // Mobile: Show list if no request selected, show detail if selected
+    // Desktop: Show both side by side
+
     return (
         <div className="h-[calc(100vh-100px)] flex flex-col">
-            <div className="flex justify-between items-center mb-6">
+            <div className={`flex justify-between items-center mb-6 ${isMobileView && selectedRequest ? 'hidden' : ''}`}>
                 <h1 className="text-2xl font-bold text-gray-900">Support Requests</h1>
-                <div className="flex space-x-2">
+                <div className="flex space-x-2 overflow-x-auto pb-2 md:pb-0">
                     {['all', 'open', 'in_progress', 'resolved'].map((f) => (
                         <button
                             key={f}
                             onClick={() => setFilter(f)}
-                            className={`px-3 py-1.5 rounded-md text-sm font-medium capitalize ${filter === f
+                            className={`px-3 py-1.5 rounded-md text-sm font-medium capitalize whitespace-nowrap ${filter === f
                                 ? 'bg-indigo-600 text-white'
                                 : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
                                 }`}
@@ -146,9 +159,14 @@ export default function SupportRequestsPage() {
                 </div>
             </div>
 
-            <div className="flex-1 flex gap-6 overflow-hidden">
-                {/* List */}
-                <div className="w-1/3 bg-white rounded-lg shadow-sm border border-gray-200 overflow-y-auto">
+            <div className="flex-1 flex gap-6 overflow-hidden relative">
+                {/* List View */}
+                <div className={`
+                    ${isMobileView ? 'w-full absolute inset-0 z-10' : 'w-1/3'} 
+                    bg-white rounded-lg shadow-sm border border-gray-200 overflow-y-auto
+                    transition-transform duration-300 ease-in-out
+                    ${isMobileView && selectedRequest ? '-translate-x-full' : 'translate-x-0'}
+                `}>
                     {loading ? (
                         <div className="p-8 text-center">
                             <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-indigo-600 border-t-transparent"></div>
@@ -161,7 +179,7 @@ export default function SupportRequestsPage() {
                                 <div
                                     key={req.id}
                                     onClick={() => setSelectedRequest(req)}
-                                    className={`p-4 cursor-pointer hover:bg-gray-50 transition-colors ${selectedRequest?.id === req.id ? 'bg-indigo-50 border-l-4 border-indigo-600' : ''
+                                    className={`p-4 cursor-pointer hover:bg-gray-50 transition-colors ${selectedRequest?.id === req.id && !isMobileView ? 'bg-indigo-50 border-l-4 border-indigo-600' : ''
                                         }`}
                                 >
                                     <div className="flex justify-between items-start mb-1">
@@ -185,19 +203,37 @@ export default function SupportRequestsPage() {
                 </div>
 
                 {/* Detail View */}
-                <div className="flex-1 bg-white rounded-lg shadow-sm border border-gray-200 flex flex-col">
+                <div className={`
+                    ${isMobileView ? 'w-full absolute inset-0 z-20' : 'flex-1'} 
+                    bg-white rounded-lg shadow-sm border border-gray-200 flex flex-col
+                    transition-transform duration-300 ease-in-out
+                    ${isMobileView && !selectedRequest ? 'translate-x-full' : 'translate-x-0'}
+                `}>
                     {selectedRequest ? (
                         <>
-                            <div className="p-6 border-b border-gray-200">
-                                <div className="flex justify-between items-start">
-                                    <div>
-                                        <h2 className="text-xl font-bold text-gray-900">{selectedRequest.subject}</h2>
-                                        <div className="mt-1 flex items-center space-x-4 text-sm text-gray-500">
-                                            <span>From: <span className="font-medium text-gray-900">{selectedRequest.name}</span></span>
-                                            <span>&lt;{selectedRequest.email}&gt;</span>
+                            <div className="p-4 md:p-6 border-b border-gray-200">
+                                <div className="flex flex-col gap-4">
+                                    {isMobileView && (
+                                        <button
+                                            onClick={() => setSelectedRequest(null)}
+                                            className="flex items-center text-gray-500 hover:text-gray-700"
+                                        >
+                                            <ArrowLeft size={20} className="mr-1" />
+                                            Back to List
+                                        </button>
+                                    )}
+
+                                    <div className="flex justify-between items-start">
+                                        <div className="flex-1">
+                                            <h2 className="text-xl font-bold text-gray-900 break-words">{selectedRequest.subject}</h2>
+                                            <div className="mt-1 flex flex-col sm:flex-row sm:items-center sm:space-x-4 text-sm text-gray-500">
+                                                <span>From: <span className="font-medium text-gray-900">{selectedRequest.name}</span></span>
+                                                <span className="break-all">&lt;{selectedRequest.email}&gt;</span>
+                                            </div>
                                         </div>
                                     </div>
-                                    <div className="flex items-center space-x-2">
+
+                                    <div className="flex items-center space-x-2 mt-2">
                                         <select
                                             value={selectedRequest.status}
                                             onChange={(e) => handleStatusUpdate(selectedRequest.id, e.target.value)}
@@ -217,7 +253,7 @@ export default function SupportRequestsPage() {
                                 </div>
                             </div>
 
-                            <div className="flex-1 p-6 overflow-y-auto bg-gray-50">
+                            <div className="flex-1 p-4 md:p-6 overflow-y-auto bg-gray-50">
                                 <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
                                     <p className="text-gray-800 whitespace-pre-wrap">{selectedRequest.message}</p>
                                 </div>

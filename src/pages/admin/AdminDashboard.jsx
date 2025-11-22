@@ -17,7 +17,7 @@ import {
     PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip, Legend,
     BarChart, Bar, XAxis, YAxis, CartesianGrid
 } from 'recharts';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 export default function AdminDashboard() {
     const navigate = useNavigate();
@@ -128,8 +128,32 @@ export default function AdminDashboard() {
     };
 
     const handleExport = () => {
-        // TODO: Implement export logic
-        console.log('Exporting data...');
+        if (!metrics.recentRegistrations.length) return;
+
+        const headers = ['Name', 'Email', 'Phone', 'Type', 'Mode', 'Location', 'Status', 'Date'];
+        const csvContent = [
+            headers.join(','),
+            ...metrics.recentRegistrations.map(r => [
+                `"${r.full_name}"`,
+                r.email,
+                r.phone,
+                r.registration_type,
+                r.participation_mode,
+                r.location_type,
+                r.status,
+                new Date(r.created_at).toLocaleDateString()
+            ].join(','))
+        ].join('\n');
+
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+        link.setAttribute('href', url);
+        link.setAttribute('download', `dashboard_report_${new Date().toISOString().split('T')[0]}.csv`);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
     };
 
     if (loading) {
@@ -152,7 +176,10 @@ export default function AdminDashboard() {
                         <RefreshCw size={16} className="mr-2" />
                         Refresh
                     </button>
-                    <button className="flex items-center rounded bg-indigo-600 px-3 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700">
+                    <button
+                        onClick={handleExport}
+                        className="flex items-center rounded bg-indigo-600 px-3 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700"
+                    >
                         <Download size={16} className="mr-2" />
                         Download Report
                     </button>
@@ -194,7 +221,7 @@ export default function AdminDashboard() {
             <div className="rounded-lg bg-white p-6 shadow-sm">
                 <h3 className="text-lg font-medium text-gray-900 mb-4">Quick Access</h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <a href="/admin/registrations" className="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                    <Link to="/admin/registrations" className="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
                         <div className="p-3 rounded-lg bg-blue-100 mr-4">
                             <Users className="w-6 h-6 text-blue-600" />
                         </div>
@@ -202,8 +229,8 @@ export default function AdminDashboard() {
                             <p className="font-medium text-gray-900">Registrations</p>
                             <p className="text-sm text-gray-500">Manage attendees</p>
                         </div>
-                    </a>
-                    <a href="/admin/badges" className="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                    </Link>
+                    <Link to="/admin/badges" className="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
                         <div className="p-3 rounded-lg bg-purple-100 mr-4">
                             <Calendar className="w-6 h-6 text-purple-600" />
                         </div>
@@ -211,8 +238,8 @@ export default function AdminDashboard() {
                             <p className="font-medium text-gray-900">Badges</p>
                             <p className="text-sm text-gray-500">Generate & download</p>
                         </div>
-                    </a>
-                    <a href="/admin/analytics" className="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                    </Link>
+                    <Link to="/admin/analytics" className="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
                         <div className="p-3 rounded-lg bg-green-100 mr-4">
                             <BarChart3 className="w-6 h-6 text-green-600" />
                         </div>
@@ -220,7 +247,7 @@ export default function AdminDashboard() {
                             <p className="font-medium text-gray-900">Analytics</p>
                             <p className="text-sm text-gray-500">Event insights</p>
                         </div>
-                    </a>
+                    </Link>
                 </div>
             </div>
 
