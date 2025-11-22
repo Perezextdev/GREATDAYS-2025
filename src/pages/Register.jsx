@@ -6,7 +6,7 @@ import { z } from 'zod';
 import {
     User, Mail, Phone, Upload, Church, MapPin, Calendar, Globe,
     CheckCircle, AlertCircle, Loader2, ArrowRight, ArrowLeft,
-    Check, Edit2, Download, ChevronDown, X
+    Check, Edit2, Download, ChevronDown, X, Sparkles
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { supabase, isSupabaseConfigured } from '../lib/supabaseClient';
@@ -830,6 +830,12 @@ const Register = () => {
                                                             <p className="text-white font-semibold">{formData.arrivalDate}</p>
                                                         </div>
                                                     )}
+                                                    {formData.departureDate && (
+                                                        <div>
+                                                            <p className="text-slate-400 text-sm">Departure Date</p>
+                                                            <p className="text-white font-semibold">{formData.departureDate}</p>
+                                                        </div>
+                                                    )}
                                                 </>
                                             )}
                                         </div>
@@ -938,32 +944,126 @@ const Register = () => {
                 {
                     submitSuccess && (
                         <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+                            {/* Confetti Effect */}
+                            <div className="absolute inset-0 pointer-events-none overflow-hidden">
+                                {[...Array(50)].map((_, i) => (
+                                    <motion.div
+                                        key={i}
+                                        initial={{
+                                            top: '-10%',
+                                            left: `${Math.random() * 100}%`,
+                                            opacity: 1,
+                                            scale: Math.random() * 0.5 + 0.5
+                                        }}
+                                        animate={{
+                                            top: '110%',
+                                            rotate: Math.random() * 360,
+                                            opacity: 0
+                                        }}
+                                        transition={{
+                                            duration: Math.random() * 2 + 2,
+                                            delay: Math.random() * 0.5,
+                                            ease: 'linear'
+                                        }}
+                                        className={`absolute w-3 h-3 rounded-full`}
+                                        style={{
+                                            backgroundColor: ['#3b82f6', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981'][Math.floor(Math.random() * 5)]
+                                        }}
+                                    />
+                                ))}
+                            </div>
+
                             <motion.div
                                 initial={{ scale: 0.9, opacity: 0 }}
                                 animate={{ scale: 1, opacity: 1 }}
-                                className="bg-slate-800 rounded-2xl p-8 max-w-md w-full border border-slate-700"
+                                className="bg-slate-800 rounded-2xl p-8 max-w-md w-full border border-slate-700 relative z-10"
                             >
                                 <div className="text-center">
-                                    <div className="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                                        <CheckCircle className="w-10 h-10 text-green-400" />
-                                    </div>
-                                    <h2 className="text-2xl font-bold text-white mb-2">Registration Successful!</h2>
-                                    <p className="text-slate-300 mb-4">
+                                    <motion.div
+                                        initial={{ scale: 0 }}
+                                        animate={{ scale: 1 }}
+                                        transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
+                                        className="w-20 h-20 bg-gradient-to-br from-green-400 to-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg shadow-green-500/50"
+                                    >
+                                        <CheckCircle className="w-12 h-12 text-white" />
+                                    </motion.div>
+                                    <motion.h2
+                                        initial={{ opacity: 0, y: 10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        transition={{ delay: 0.3 }}
+                                        className="text-3xl font-bold text-white mb-2"
+                                    >
+                                        Registration Successful! 🎉
+                                    </motion.h2>
+                                    <motion.p
+                                        initial={{ opacity: 0 }}
+                                        animate={{ opacity: 1 }}
+                                        transition={{ delay: 0.4 }}
+                                        className="text-slate-300 mb-4"
+                                    >
                                         Your registration for GREAT DAYS 2025 has been confirmed.
-                                    </p>
-                                    <div className="bg-slate-700/50 rounded-lg p-4 mb-6">
+                                    </motion.p>
+                                    <motion.div
+                                        initial={{ opacity: 0, y: 10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        transition={{ delay: 0.5 }}
+                                        className="bg-slate-700/50 rounded-lg p-4 mb-6"
+                                    >
                                         <p className="text-slate-400 text-sm mb-1">Your Registration ID:</p>
                                         <p className="text-white font-mono text-lg font-bold">{registrationId}</p>
-                                    </div>
-                                    <p className="text-slate-400 text-sm mb-4">
-                                        Redirecting to home page in 5 seconds...
-                                    </p>
-                                    <Link
-                                        to="/"
-                                        className="inline-block bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bold px-6 py-3 rounded-lg transition-all"
+                                    </motion.div>
+
+                                    {/* Badge Download Button - Only for Onsite */}
+                                    {formData.participationMode === 'Onsite' && (
+                                        <motion.div
+                                            initial={{ opacity: 0, y: 10 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            transition={{ delay: 0.6 }}
+                                            className="mb-4"
+                                        >
+                                            <button
+                                                onClick={() => {
+                                                    // Badge download logic will be handled by the badge generator
+                                                    window.open(`/api/download-badge/${registrationId}`, '_blank');
+                                                }}
+                                                className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold px-6 py-3 rounded-lg transition-all flex items-center justify-center gap-2 shadow-lg shadow-purple-500/25"
+                                            >
+                                                <Download className="w-5 h-5" />
+                                                Download Your Badge
+                                            </button>
+                                            <p className="text-slate-400 text-xs mt-2">Your badge has been generated and is ready for download</p>
+                                        </motion.div>
+                                    )}
+
+                                    <motion.p
+                                        initial={{ opacity: 0 }}
+                                        animate={{ opacity: 1 }}
+                                        transition={{ delay: 0.7 }}
+                                        className="text-slate-400 text-sm mb-4 flex items-center justify-center gap-2"
                                     >
-                                        Return Home Now
-                                    </Link>
+                                        <Sparkles className="w-4 h-4 text-yellow-400" />
+                                        Check your email for confirmation
+                                    </motion.p>
+                                    <motion.p
+                                        initial={{ opacity: 0 }}
+                                        animate={{ opacity: 1 }}
+                                        transition={{ delay: 0.8 }}
+                                        className="text-slate-500 text-xs mb-4"
+                                    >
+                                        Redirecting to home page in 5 seconds...
+                                    </motion.p>
+                                    <motion.div
+                                        initial={{ opacity: 0, y: 10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        transition={{ delay: 0.9 }}
+                                    >
+                                        <Link
+                                            to="/"
+                                            className="inline-block bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bold px-8 py-3 rounded-lg transition-all shadow-lg hover:shadow-xl hover:scale-105"
+                                        >
+                                            Return Home Now
+                                        </Link>
+                                    </motion.div>
                                 </div>
                             </motion.div>
                         </div>
