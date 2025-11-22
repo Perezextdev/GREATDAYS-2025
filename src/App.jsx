@@ -27,7 +27,7 @@ import ReportsPage from './pages/admin/ReportsPage';
 const AdminTestimonials = () => <div className="p-4">Testimonials Management (Coming Soon)</div>;
 const AdminSupport = () => <div className="p-4">Support Requests (Coming Soon)</div>;
 const AdminBadges = () => <div className="p-4">Badge Management (Coming Soon)</div>;
-const AdminSettings = () => <div className="p-4">Settings (Coming Soon)</div>;
+import AdminSettings from './pages/admin/AdminSettings';
 
 function Home() {
   return (
