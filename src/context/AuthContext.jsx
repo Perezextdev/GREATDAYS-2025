@@ -53,22 +53,29 @@ export const AuthProvider = ({ children }) => {
                 .from('admin_users')
                 .select('*')
                 .eq('email', email)
-                .eq('is_active', true)
                 .single();
 
             if (error || !data) {
-                console.warn('User is authenticated but not an active admin');
+                console.warn('User is authenticated but not found in admin_users');
+                setIsAdmin(false);
+                setAdminProfile(null);
+            } else if (!data.is_active) {
+                console.warn('User is authenticated but is_active is false');
                 setIsAdmin(false);
                 setAdminProfile(null);
             } else {
                 setAdminProfile(data);
                 setIsAdmin(true);
 
-                // Update last login
-                await supabase
-                    .from('admin_users')
-                    .update({ last_login: new Date().toISOString() })
-                    .eq('id', data.id);
+                // Update last login - wrap in try/catch to avoid blocking
+                try {
+                    await supabase
+                        .from('admin_users')
+                        .update({ last_login: new Date().toISOString() })
+                        .eq('id', data.id);
+                } catch (updateError) {
+                    console.warn('Failed to update last_login:', updateError);
+                }
             }
         } catch (error) {
             console.error('Error fetching admin profile:', error);
@@ -84,6 +91,10 @@ export const AuthProvider = ({ children }) => {
             password,
         });
         if (error) throw error;
+
+        if (data.user) {
+            await fetchAdminProfile(data.user.email);
+        }
         return data;
     };
 
@@ -94,13 +105,39 @@ export const AuthProvider = ({ children }) => {
         setIsAdmin(false);
     };
 
+    const hasPermission = (requiredRole) => {
+        if (!adminProfile || !adminProfile.role) return false;
+        if (adminProfile.role === 'super_admin') return true;
+
+        // Role hierarchy or specific checks
+        switch (requiredRole) {
+            case 'manage_registrations':
+                return ['super_admin', 'coordinator'].includes(adminProfile.role);
+            case 'view_registrations':
+                return ['super_admin', 'coordinator', 'support_agent', 'viewer'].includes(adminProfile.role);
+            case 'manage_testimonials':
+                return ['super_admin', 'coordinator'].includes(adminProfile.role);
+            case 'manage_support':
+                return ['super_admin', 'support_agent'].includes(adminProfile.role);
+            case 'manage_badges':
+                return ['super_admin', 'coordinator'].includes(adminProfile.role);
+            case 'manage_settings':
+                return ['super_admin'].includes(adminProfile.role);
+            case 'edit_delete':
+                return ['super_admin', 'coordinator'].includes(adminProfile.role); // General edit/delete permission
+            default:
+                return false;
+        }
+    };
+
     const value = {
         user,
         adminProfile,
         isAdmin,
         loading,
         login,
-        logout
+        logout,
+        hasPermission
     };
 
     return (

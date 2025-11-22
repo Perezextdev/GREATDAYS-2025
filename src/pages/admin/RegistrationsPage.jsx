@@ -15,8 +15,10 @@ import {
 import { exportToExcel } from '../../utils/excelExport';
 import EditRegistrationModal from '../../components/admin/EditRegistrationModal';
 import RegistrationDetailModal from '../../components/admin/RegistrationDetailModal';
+import { useAuth } from '../../context/AuthContext';
 
 export default function RegistrationsPage() {
+    const { hasPermission } = useAuth();
     const [registrations, setRegistrations] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
@@ -256,13 +258,15 @@ export default function RegistrationsPage() {
                                             >
                                                 <Eye size={18} />
                                             </button>
-                                            <button
-                                                onClick={() => setEditingReg(reg)}
-                                                className="text-blue-600 hover:text-blue-900 mx-1"
-                                                title="Edit"
-                                            >
-                                                <Edit size={18} />
-                                            </button>
+                                            {hasPermission('edit_delete') && (
+                                                <button
+                                                    onClick={() => setEditingReg(reg)}
+                                                    className="text-blue-600 hover:text-blue-900 mx-1"
+                                                    title="Edit"
+                                                >
+                                                    <Edit size={18} />
+                                                </button>
+                                            )}
                                         </td>
                                     </tr>
                                 ))

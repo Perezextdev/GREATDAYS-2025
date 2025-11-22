@@ -10,8 +10,10 @@ import {
     Filter,
     ArrowLeft
 } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
 
 export default function SupportRequestsPage() {
+    const { hasPermission } = useAuth();
     const [requests, setRequests] = useState([]);
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState('all'); // all, open, in_progress, resolved
@@ -233,23 +235,25 @@ export default function SupportRequestsPage() {
                                         </div>
                                     </div>
 
-                                    <div className="flex items-center space-x-2 mt-2">
-                                        <select
-                                            value={selectedRequest.status}
-                                            onChange={(e) => handleStatusUpdate(selectedRequest.id, e.target.value)}
-                                            className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
-                                        >
-                                            <option value="open">Open</option>
-                                            <option value="in_progress">In Progress</option>
-                                            <option value="resolved">Resolved</option>
-                                        </select>
-                                        <button
-                                            onClick={() => handleDelete(selectedRequest.id)}
-                                            className="p-2 text-gray-400 hover:text-red-600 rounded-full hover:bg-gray-100"
-                                        >
-                                            <Trash2 size={20} />
-                                        </button>
-                                    </div>
+                                    {hasPermission('manage_support') && (
+                                        <div className="flex items-center space-x-2 mt-2">
+                                            <select
+                                                value={selectedRequest.status}
+                                                onChange={(e) => handleStatusUpdate(selectedRequest.id, e.target.value)}
+                                                className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
+                                            >
+                                                <option value="open">Open</option>
+                                                <option value="in_progress">In Progress</option>
+                                                <option value="resolved">Resolved</option>
+                                            </select>
+                                            <button
+                                                onClick={() => handleDelete(selectedRequest.id)}
+                                                className="p-2 text-gray-400 hover:text-red-600 rounded-full hover:bg-gray-100"
+                                            >
+                                                <Trash2 size={20} />
+                                            </button>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
 
@@ -259,28 +263,30 @@ export default function SupportRequestsPage() {
                                 </div>
                             </div>
 
-                            <div className="p-4 border-t border-gray-200 bg-white">
-                                <form onSubmit={handleReply}>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">Reply</label>
-                                    <textarea
-                                        rows={4}
-                                        className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md"
-                                        placeholder="Type your reply here..."
-                                        value={replyText}
-                                        onChange={(e) => setReplyText(e.target.value)}
-                                    />
-                                    <div className="mt-3 flex justify-end">
-                                        <button
-                                            type="submit"
-                                            disabled={!replyText.trim()}
-                                            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
-                                        >
-                                            <Send size={16} className="mr-2" />
-                                            Send Reply
-                                        </button>
-                                    </div>
-                                </form>
-                            </div>
+                            {hasPermission('manage_support') && (
+                                <div className="p-4 border-t border-gray-200 bg-white">
+                                    <form onSubmit={handleReply}>
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">Reply</label>
+                                        <textarea
+                                            rows={4}
+                                            className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                                            placeholder="Type your reply here..."
+                                            value={replyText}
+                                            onChange={(e) => setReplyText(e.target.value)}
+                                        />
+                                        <div className="mt-3 flex justify-end">
+                                            <button
+                                                type="submit"
+                                                disabled={!replyText.trim()}
+                                                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
+                                            >
+                                                <Send size={16} className="mr-2" />
+                                                Send Reply
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+                            )}
                         </>
                     ) : (
                         <div className="flex-1 flex items-center justify-center text-gray-500">

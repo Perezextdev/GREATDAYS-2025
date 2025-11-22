@@ -9,8 +9,10 @@ import {
     MoreVertical,
     Filter
 } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
 
 export default function TestimonialsPage() {
+    const { hasPermission } = useAuth();
     const [testimonials, setTestimonials] = useState([]);
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState('pending'); // pending, approved, rejected, all
@@ -165,44 +167,46 @@ export default function TestimonialsPage() {
                                 </div>
                             </div>
 
-                            <div className="bg-gray-50 px-6 py-3 border-t border-gray-200 flex justify-between items-center">
-                                <div className="flex space-x-2">
-                                    {item.status === 'pending' && (
-                                        <>
+                            {hasPermission('manage_testimonials') && (
+                                <div className="bg-gray-50 px-6 py-3 border-t border-gray-200 flex justify-between items-center">
+                                    <div className="flex space-x-2">
+                                        {item.status === 'pending' && (
+                                            <>
+                                                <button
+                                                    onClick={() => handleStatusUpdate(item.id, 'approved')}
+                                                    className="p-1.5 rounded-full bg-green-100 text-green-600 hover:bg-green-200"
+                                                    title="Approve"
+                                                >
+                                                    <Check size={16} />
+                                                </button>
+                                                <button
+                                                    onClick={() => handleStatusUpdate(item.id, 'rejected')}
+                                                    className="p-1.5 rounded-full bg-red-100 text-red-600 hover:bg-red-200"
+                                                    title="Reject"
+                                                >
+                                                    <X size={16} />
+                                                </button>
+                                            </>
+                                        )}
+                                        {item.status === 'approved' && (
                                             <button
-                                                onClick={() => handleStatusUpdate(item.id, 'approved')}
-                                                className="p-1.5 rounded-full bg-green-100 text-green-600 hover:bg-green-200"
-                                                title="Approve"
+                                                onClick={() => toggleVisibility(item.id, item.is_visible)}
+                                                className={`p-1.5 rounded-full ${item.is_visible ? 'bg-blue-100 text-blue-600' : 'bg-gray-200 text-gray-500'} hover:bg-blue-200`}
+                                                title="Toggle Visibility"
                                             >
-                                                <Check size={16} />
+                                                <Eye size={16} />
                                             </button>
-                                            <button
-                                                onClick={() => handleStatusUpdate(item.id, 'rejected')}
-                                                className="p-1.5 rounded-full bg-red-100 text-red-600 hover:bg-red-200"
-                                                title="Reject"
-                                            >
-                                                <X size={16} />
-                                            </button>
-                                        </>
-                                    )}
-                                    {item.status === 'approved' && (
-                                        <button
-                                            onClick={() => toggleVisibility(item.id, item.is_visible)}
-                                            className={`p-1.5 rounded-full ${item.is_visible ? 'bg-blue-100 text-blue-600' : 'bg-gray-200 text-gray-500'} hover:bg-blue-200`}
-                                            title="Toggle Visibility"
-                                        >
-                                            <Eye size={16} />
-                                        </button>
-                                    )}
+                                        )}
+                                    </div>
+                                    <button
+                                        onClick={() => handleDelete(item.id)}
+                                        className="text-gray-400 hover:text-red-600"
+                                        title="Delete"
+                                    >
+                                        <Trash2 size={16} />
+                                    </button>
                                 </div>
-                                <button
-                                    onClick={() => handleDelete(item.id)}
-                                    className="text-gray-400 hover:text-red-600"
-                                    title="Delete"
-                                >
-                                    <Trash2 size={16} />
-                                </button>
-                            </div>
+                            )}
                         </div>
                     ))
                 )}

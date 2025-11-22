@@ -27,12 +27,12 @@ export default function AdminLayout() {
     };
 
     const navItems = [
-        { name: 'Dashboard', path: '/admin/dashboard', icon: LayoutDashboard },
-        { name: 'Registrations', path: '/admin/registrations', icon: Users },
-        { name: 'Testimonials', path: '/admin/testimonials', icon: MessageSquare },
-        { name: 'Support', path: '/admin/support', icon: LifeBuoy },
-        { name: 'Badges', path: '/admin/badges', icon: User }, // Using User icon as placeholder for Badge
-        { name: 'Settings', path: '/admin/settings', icon: Settings },
+        { name: 'Dashboard', path: '/admin/dashboard', icon: LayoutDashboard, roles: ['super_admin', 'coordinator', 'support_agent', 'viewer'] },
+        { name: 'Registrations', path: '/admin/registrations', icon: Users, roles: ['super_admin', 'coordinator', 'support_agent', 'viewer'] },
+        { name: 'Testimonials', path: '/admin/testimonials', icon: MessageSquare, roles: ['super_admin', 'coordinator', 'viewer'] },
+        { name: 'Support', path: '/admin/support', icon: LifeBuoy, roles: ['super_admin', 'support_agent', 'viewer'] },
+        { name: 'Badges', path: '/admin/badges', icon: User, roles: ['super_admin', 'coordinator', 'viewer'] },
+        { name: 'Settings', path: '/admin/settings', icon: Settings, roles: ['super_admin'] },
     ];
 
     return (
@@ -105,7 +105,7 @@ export default function AdminLayout() {
                                 </button>
                             </div>
 
-                            {navItems.map((item) => {
+                            {navItems.filter(item => item.roles.includes(adminProfile?.role)).map((item) => {
                                 const isActive = location.pathname.startsWith(item.path);
                                 return (
                                     <Link

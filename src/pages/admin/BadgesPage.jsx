@@ -15,8 +15,10 @@ import {
     Check, CheckCircle, Clock, Calendar, MapPin, Utensils, ChevronDown
 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
+import { useAuth } from '../../context/AuthContext';
 
 const BadgesPage = () => {
+    const { hasPermission } = useAuth();
     const [registrations, setRegistrations] = useState([]);
     const [loading, setLoading] = useState(true);
     const [processing, setProcessing] = useState(false);
@@ -449,15 +451,24 @@ const BadgesPage = () => {
                                             {badge.arrival_date ? format(parseISO(badge.arrival_date), 'MMM dd') : 'N/A'}
                                         </td>
                                         <td className="px-4 py-3">
-                                            <button
-                                                onClick={() => togglePrintStatus(badge)}
-                                                className={`px-3 py-1 text-xs rounded-full font-medium ${badge.print_status === 'printed'
+                                            {hasPermission('manage_badges') ? (
+                                                <button
+                                                    onClick={() => togglePrintStatus(badge)}
+                                                    className={`px-3 py-1 text-xs rounded-full font-medium ${badge.print_status === 'printed'
+                                                        ? 'bg-green-100 text-green-700'
+                                                        : 'bg-orange-100 text-orange-700'
+                                                        }`}
+                                                >
+                                                    {badge.print_status === 'printed' ? 'Printed' : 'Pending'}
+                                                </button>
+                                            ) : (
+                                                <span className={`px-3 py-1 text-xs rounded-full font-medium ${badge.print_status === 'printed'
                                                     ? 'bg-green-100 text-green-700'
                                                     : 'bg-orange-100 text-orange-700'
-                                                    }`}
-                                            >
-                                                {badge.print_status === 'printed' ? 'Printed' : 'Pending'}
-                                            </button>
+                                                    }`}>
+                                                    {badge.print_status === 'printed' ? 'Printed' : 'Pending'}
+                                                </span>
+                                            )}
                                         </td>
                                         <td className="px-4 py-3">
                                             <div className="flex items-center gap-2">
@@ -477,23 +488,27 @@ const BadgesPage = () => {
                                                         >
                                                             <Download className="w-4 h-4" />
                                                         </button>
-                                                        <button
-                                                            onClick={() => handleRegenerateBadge(badge)}
-                                                            className="p-2 text-slate-600 hover:text-orange-600 transition-colors"
-                                                            title="Regenerate"
-                                                            disabled={processing}
-                                                        >
-                                                            <RefreshCw className={`w-4 h-4 ${processing ? 'animate-spin' : ''}`} />
-                                                        </button>
+                                                        {hasPermission('manage_badges') && (
+                                                            <button
+                                                                onClick={() => handleRegenerateBadge(badge)}
+                                                                className="p-2 text-slate-600 hover:text-orange-600 transition-colors"
+                                                                title="Regenerate"
+                                                                disabled={processing}
+                                                            >
+                                                                <RefreshCw className={`w-4 h-4 ${processing ? 'animate-spin' : ''}`} />
+                                                            </button>
+                                                        )}
                                                     </>
                                                 ) : (
-                                                    <button
-                                                        onClick={() => handleGenerateBadge(badge)}
-                                                        className="px-3 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700"
-                                                        disabled={processing}
-                                                    >
-                                                        Generate
-                                                    </button>
+                                                    hasPermission('manage_badges') && (
+                                                        <button
+                                                            onClick={() => handleGenerateBadge(badge)}
+                                                            className="px-3 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700"
+                                                            disabled={processing}
+                                                        >
+                                                            Generate
+                                                        </button>
+                                                    )
                                                 )}
                                             </div>
                                         </td>
@@ -582,14 +597,16 @@ const BadgesPage = () => {
                                     <Printer className="w-5 h-5" />
                                     Print
                                 </button>
-                                <button
-                                    onClick={() => handleRegenerateBadge(previewData)}
-                                    className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700"
-                                    disabled={processing}
-                                >
-                                    <RefreshCw className="w-5 h-5" />
-                                    Regenerate
-                                </button>
+                                {hasPermission('manage_badges') && (
+                                    <button
+                                        onClick={() => handleRegenerateBadge(previewData)}
+                                        className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700"
+                                        disabled={processing}
+                                    >
+                                        <RefreshCw className="w-5 h-5" />
+                                        Regenerate
+                                    </button>
+                                )}
                             </div>
                         </motion.div>
                     </motion.div>
