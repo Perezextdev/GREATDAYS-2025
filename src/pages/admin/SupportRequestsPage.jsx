@@ -8,7 +8,8 @@ import {
     Send,
     Trash2,
     Filter,
-    ArrowLeft
+    ArrowLeft,
+    MessageCircle
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
@@ -185,9 +186,17 @@ export default function SupportRequestsPage() {
                                         }`}
                                 >
                                     <div className="flex justify-between items-start mb-1">
-                                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium uppercase ${getPriorityColor(req.priority)}`}>
-                                            {req.priority}
-                                        </span>
+                                        <div className="flex items-center gap-2">
+                                            <span className={`text-xs px-2 py-0.5 rounded-full font-medium uppercase ${getPriorityColor(req.priority)}`}>
+                                                {req.priority}
+                                            </span>
+                                            {req.source === 'chatbot' && (
+                                                <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-purple-100 text-purple-600 flex items-center gap-1">
+                                                    <MessageCircle size={12} />
+                                                    Chat
+                                                </span>
+                                            )}
+                                        </div>
                                         <span className="text-xs text-gray-500">
                                             {new Date(req.created_at).toLocaleDateString()}
                                         </span>
@@ -227,7 +236,15 @@ export default function SupportRequestsPage() {
 
                                     <div className="flex justify-between items-start">
                                         <div className="flex-1">
-                                            <h2 className="text-xl font-bold text-gray-900 break-words">{selectedRequest.subject}</h2>
+                                            <div className="flex items-center gap-2 mb-1">
+                                                <h2 className="text-xl font-bold text-gray-900 break-words">{selectedRequest.subject}</h2>
+                                                {selectedRequest.source === 'chatbot' && (
+                                                    <span className="text-xs px-2 py-1 rounded-full font-medium bg-purple-100 text-purple-600 flex items-center gap-1">
+                                                        <MessageCircle size={14} />
+                                                        From Chat
+                                                    </span>
+                                                )}
+                                            </div>
                                             <div className="mt-1 flex flex-col sm:flex-row sm:items-center sm:space-x-4 text-sm text-gray-500">
                                                 <span>From: <span className="font-medium text-gray-900">{selectedRequest.name}</span></span>
                                                 <span className="break-all">&lt;{selectedRequest.email}&gt;</span>

@@ -1,34 +1,86 @@
-// src/pages/admin/AdminLoginPage.jsx
+// src/pages/admin/AdminSignupPage.jsx
 import { useState } from "react";
-import { useAuth } from "../../context/AuthContext";
 import { useNavigate, Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Lock, Mail, Eye, EyeOff, ArrowRight, ShieldCheck } from "lucide-react";
+import { Lock, Mail, Eye, EyeOff, ArrowRight, ShieldCheck, User } from "lucide-react";
+import { supabase } from "../../lib/supabaseClient";
 
-export default function AdminLoginPage() {
-    const { login } = useAuth();
+export default function AdminSignupPage() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
-    const [remember, setRemember] = useState(false);
+    const [fullName, setFullName] = useState("");
     const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
+    const [success, setSuccess] = useState(false);
     const navigate = useNavigate();
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
         setError("");
+
         try {
-            await login(email, password);
-            navigate("/admin/dashboard");
+            // 1. Sign up the user
+            const { data: authData, error: authError } = await supabase.auth.signUp({
+                email,
+                password,
+                options: {
+                    data: {
+                        full_name: fullName
+                    }
+                }
+            });
+
+            if (authError) throw authError;
+
+            if (authData.user) {
+                // 2. Insert admin profile (using service role would be better, but we'll use a simple insert)
+                const { error: profileError } = await supabase
+                    .from('admin_users')
+                    .insert({
+                        id: authData.user.id,
+                        email: email,
+                        full_name: fullName,
+                        role: 'super_admin', // Default to super_admin for first signup
+                        is_active: true
+                    });
+
+                if (profileError) {
+                    console.error('Profile creation error:', profileError);
+                    // Don't throw - user is created, just profile failed
+                }
+
+                setSuccess(true);
+                setTimeout(() => {
+                    navigate('/admin/login');
+                }, 2000);
+            }
         } catch (err) {
             console.error(err);
-            setError(err.message || "Login failed");
+            setError(err.message || "Signup failed");
         } finally {
             setLoading(false);
         }
     };
+
+    if (success) {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-slate-900">
+                <motion.div
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl shadow-2xl p-8 max-w-md w-full text-center"
+                >
+                    <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-green-500 mb-6">
+                        <ShieldCheck className="w-8 h-8 text-white" />
+                    </div>
+                    <h2 className="text-2xl font-bold text-white mb-2">Account Created!</h2>
+                    <p className="text-slate-300 mb-4">Redirecting to login...</p>
+                </motion.div>
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-slate-900 relative overflow-hidden">
@@ -50,8 +102,8 @@ export default function AdminLoginPage() {
                         <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-purple-600 mb-6 shadow-lg shadow-blue-500/30">
                             <ShieldCheck className="w-8 h-8 text-white" />
                         </div>
-                        <h2 className="text-3xl font-bold text-white mb-2">Welcome Back</h2>
-                        <p className="text-slate-400">Sign in to the Admin Portal</p>
+                        <h2 className="text-3xl font-bold text-white mb-2">Create Admin Account</h2>
+                        <p className="text-slate-400">Sign up for admin access</p>
                     </div>
 
                     {error && (
@@ -67,13 +119,29 @@ export default function AdminLoginPage() {
 
                     <form onSubmit={handleSubmit} className="space-y-6">
                         <div className="space-y-2">
+                            <label className="text-sm font-medium text-slate-300 ml-1">Full Name</label>
+                            <div className="relative group">
+                                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                    <User className="h-5 w-5 text-slate-500 group-focus-within:text-blue-400 transition-colors" />
+                                </div>
+                                <input
+                                    type="text"
+                                    required
+                                    value={fullName}
+                                    onChange={(e) => setFullName(e.target.value)}
+                                    className="w-full bg-slate-800/50 border border-slate-700 rounded-xl py-3.5 pl-11 pr-4 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all"
+                                    placeholder="John Doe"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="space-y-2">
                             <label className="text-sm font-medium text-slate-300 ml-1">Email Address</label>
                             <div className="relative group">
                                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                                     <Mail className="h-5 w-5 text-slate-500 group-focus-within:text-blue-400 transition-colors" />
                                 </div>
                                 <input
-                                    id="email"
                                     type="email"
                                     required
                                     value={email}
@@ -91,13 +159,13 @@ export default function AdminLoginPage() {
                                     <Lock className="h-5 w-5 text-slate-500 group-focus-within:text-blue-400 transition-colors" />
                                 </div>
                                 <input
-                                    id="password"
                                     type={showPassword ? "text" : "password"}
                                     required
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
                                     className="w-full bg-slate-800/50 border border-slate-700 rounded-xl py-3.5 pl-11 pr-12 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all"
                                     placeholder="••••••••"
+                                    minLength={6}
                                 />
                                 <button
                                     type="button"
@@ -109,29 +177,6 @@ export default function AdminLoginPage() {
                             </div>
                         </div>
 
-                        <div className="flex items-center justify-between pt-2">
-                            <label className="flex items-center space-x-3 cursor-pointer group">
-                                <div className="relative">
-                                    <input
-                                        type="checkbox"
-                                        checked={remember}
-                                        onChange={(e) => setRemember(e.target.checked)}
-                                        className="peer sr-only"
-                                    />
-                                    <div className="w-5 h-5 border-2 border-slate-600 rounded bg-slate-800 peer-checked:bg-blue-500 peer-checked:border-blue-500 transition-all" />
-                                    <div className="absolute inset-0 text-white opacity-0 peer-checked:opacity-100 flex items-center justify-center pointer-events-none transition-opacity">
-                                        <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                                        </svg>
-                                    </div>
-                                </div>
-                                <span className="text-sm text-slate-400 group-hover:text-slate-300 transition-colors">Remember me</span>
-                            </label>
-                            <a href="#" className="text-sm font-medium text-blue-400 hover:text-blue-300 transition-colors">
-                                Forgot password?
-                            </a>
-                        </div>
-
                         <button
                             type="submit"
                             disabled={loading}
@@ -141,18 +186,18 @@ export default function AdminLoginPage() {
                                 <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                             ) : (
                                 <>
-                                    Sign In
+                                    Create Account
                                     <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
                                 </>
                             )}
                         </button>
 
-                        <div className="text-center mt-4">
+                        <div className="text-center">
                             <Link
-                                to="/admin/signup"
+                                to="/admin/login"
                                 className="text-sm text-blue-400 hover:text-blue-300 transition-colors"
                             >
-                                Don't have an account? Sign up
+                                Already have an account? Sign in
                             </Link>
                         </div>
                     </form>

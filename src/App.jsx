@@ -9,9 +9,11 @@ import Register from './pages/Register';
 import SubmitTestimonyPage from './pages/SubmitTestimonyPage';
 import AboutPage from './pages/AboutPage';
 import ScrollToTop from './components/ScrollToTop';
+import ChatBot from './components/ChatBot';
 
 // Admin Imports
 import AdminLoginPage from './pages/admin/AdminLoginPage';
+import AdminSignupPage from './pages/admin/AdminSignupPage';
 import AdminLayout from './components/admin/AdminLayout';
 import ProtectedRoute from './components/admin/ProtectedRoute';
 import AdminDashboard from './pages/admin/AdminDashboard';
@@ -45,6 +47,7 @@ function PublicLayout({ children }) {
       <Navbar />
       {children}
       <Footer />
+      <ChatBot />
     </div>
   );
 }
@@ -81,6 +84,7 @@ function App() {
 
           {/* Admin Routes */}
           <Route path="/admin/login" element={<AdminLoginPage />} />
+          <Route path="/admin/signup" element={<AdminSignupPage />} />
 
           <Route path="/admin" element={<ProtectedRoute />}>
             <Route element={<AdminLayout />}>
