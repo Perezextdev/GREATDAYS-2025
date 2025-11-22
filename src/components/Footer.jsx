@@ -7,8 +7,15 @@ const Footer = () => {
             <div className="container mx-auto px-6">
                 <div className="grid md:grid-cols-4 gap-8 mb-8">
                     <div className="col-span-1 md:col-span-2">
-                        <div className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-600 bg-clip-text text-transparent mb-4">
-                            GREAT DAYS
+                        <div className="flex items-center gap-3 mb-4">
+                            <img
+                                src="/logo.png"
+                                alt="FDIM Logo"
+                                className="h-12 w-12 object-contain hover:drop-shadow-[0_0_10px_rgba(59,130,246,0.5)] transition-all duration-300"
+                            />
+                            <div className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-600 bg-clip-text text-transparent">
+                                GREAT DAYS
+                            </div>
                         </div>
                         <p className="text-slate-400 mb-4 max-w-sm">
                             Raising a people pleasing to the Father through faith-based teachings and community outreach.

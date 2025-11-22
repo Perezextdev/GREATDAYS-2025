@@ -20,6 +20,7 @@ import TestimonialsPage from './pages/admin/TestimonialsPage';
 import BadgesPage from './pages/admin/BadgesPage';
 import SupportRequestsPage from './pages/admin/SupportRequestsPage';
 import AnalyticsPage from './pages/admin/AnalyticsPage';
+import ReportsPage from './pages/admin/ReportsPage';
 
 // Placeholder components for routes we haven't built yet
 // const AdminRegistrations = () => <div className="p-4">Registrations Page (Coming Soon)</div>;

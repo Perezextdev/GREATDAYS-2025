@@ -31,11 +31,17 @@ const Navbar = () => {
                 }`}
         >
             <div className="container mx-auto px-6 flex items-center justify-between">
-                <Link to="/" className="text-2xl font-bold tracking-tighter flex items-center gap-2 group">
-                    <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold shadow-lg shadow-blue-500/20 group-hover:scale-110 transition-transform">
-                        G
-                    </div>
-                    <span className="text-white">GREAT <span className="text-blue-500">DAYS</span></span>
+                <Link to="/" className="flex items-center gap-3 group">
+                    <motion.img
+                        src="/logo.png"
+                        alt="FDIM Logo"
+                        className="h-10 w-10 md:h-12 md:w-12 object-contain transition-transform duration-300 group-hover:scale-110"
+                        whileHover={{ rotate: [0, -5, 5, 0] }}
+                        transition={{ duration: 0.5 }}
+                    />
+                    <span className="text-xl md:text-2xl font-bold tracking-tighter text-white">
+                        GREAT <span className="text-blue-500">DAYS</span>
+                    </span>
                 </Link>
 
                 {/* Desktop Nav */}

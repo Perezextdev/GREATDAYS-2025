@@ -361,6 +361,23 @@ const Register = () => {
                                         {errors.title && <p className="text-red-400 text-sm mt-1">{errors.title.message}</p>}
                                     </div>
 
+                                    {/* Full Name */}
+                                    <div>
+                                        <label className="block text-white font-semibold mb-2">
+                                            Full Name <span className="text-red-400">*</span>
+                                        </label>
+                                        <div className="relative">
+                                            <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                                            <input
+                                                {...register('fullName')}
+                                                type="text"
+                                                placeholder="Enter your full name"
+                                                className="w-full bg-white/5 border border-white/10 rounded-xl pl-11 pr-4 py-3 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all"
+                                            />
+                                        </div>
+                                        {errors.fullName && <p className="text-red-400 text-sm mt-1">{errors.fullName.message}</p>}
+                                    </div>
+
                                     <div>
                                         <label className="block text-white font-semibold mb-2">
                                             Nationality <span className="text-red-400">*</span>
@@ -520,20 +537,14 @@ const Register = () => {
                                                     className="w-full bg-white/5 border border-white/10 rounded-xl pl-11 pr-4 py-3 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 appearance-none transition-all"
                                                 >
                                                     <option value="">Select Branch</option>
-                                                    <option value="Zaria (Headquarters)">Zaria (Headquarters)</option>
-                                                    <option value="Kaduna">Kaduna</option>
-                                                    <option value="Abuja">Abuja</option>
-                                                    <option value="Lagos">Lagos</option>
-                                                    <option value="Kano">Kano</option>
-                                                    <option value="Jalingo">Jalingo</option>
-                                                    <option value="Wukari">Wukari</option>
-                                                    <option value="Zing">Zing</option>
-                                                    <option value="Enugu">Enugu</option>
-                                                    <option value="Gombe">Gombe</option>
-                                                    <option value="Yola">Yola</option>
-                                                    <option value="Yobe">Yobe</option>
-                                                    <option value="United Kingdom">United Kingdom</option>
-                                                    <option value="Other">Other</option>
+                                                    <option value="FDIM-HEADQUARTERS (ZARIA)">FDIM-HEADQUARTERS (ZARIA)</option>
+                                                    <option value="FDIM-LAGOS">FDIM-LAGOS</option>
+                                                    <option value="FDIM-ABUJA">FDIM-ABUJA</option>
+                                                    <option value="FDIM-ENUGU">FDIM-ENUGU</option>
+                                                    <option value="FDIM-TARABA">FDIM-TARABA</option>
+                                                    <option value="FDIM-JALINGO">FDIM-JALINGO</option>
+                                                    <option value="FDIM-KADUNA">FDIM-KADUNA</option>
+                                                    <option value="FDIM-KANO">FDIM-KANO</option>
                                                 </select>
                                                 <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 pointer-events-none" />
                                             </div>
@@ -720,7 +731,7 @@ const Register = () => {
 
                                                     <div>
                                                         <label className="block text-white font-semibold mb-2">
-                                                            Expected Arrival Date
+                                                            Expected Arrival Date <span className="text-red-400">*</span>
                                                         </label>
                                                         <div className="relative">
                                                             <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
@@ -729,6 +740,22 @@ const Register = () => {
                                                                 type="date"
                                                                 min="2025-01-24"
                                                                 max="2025-01-31"
+                                                                className="w-full bg-white/5 border border-white/10 rounded-xl pl-11 pr-4 py-3 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all"
+                                                            />
+                                                        </div>
+                                                    </div>
+
+                                                    <div>
+                                                        <label className="block text-white font-semibold mb-2">
+                                                            Expected Departure Date
+                                                        </label>
+                                                        <div className="relative">
+                                                            <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                                                            <input
+                                                                {...register('departureDate')}
+                                                                type="date"
+                                                                min="2025-01-24"
+                                                                max="2025-02-02"
                                                                 className="w-full bg-white/5 border border-white/10 rounded-xl pl-11 pr-4 py-3 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all"
                                                             />
                                                         </div>
