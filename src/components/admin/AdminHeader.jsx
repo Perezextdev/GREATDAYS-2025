@@ -13,14 +13,18 @@ import {
     UserPlus,
     FileText,
     MessageSquare,
-    Upload
+    Upload,
+    Sun,
+    Moon
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useNotifications } from '../../hooks/useNotifications';
+import { useTheme } from '../../context/ThemeContext';
 
 export default function AdminHeader({ onMenuClick, onSearchClick }) {
     const { adminProfile, logout } = useAuth();
     const { notifications, unreadCount, markAllAsRead } = useNotifications();
+    const { theme, toggleTheme } = useTheme();
     const [userMenuOpen, setUserMenuOpen] = useState(false);
     const [quickAddOpen, setQuickAddOpen] = useState(false);
     const [notificationsOpen, setNotificationsOpen] = useState(false);
@@ -47,11 +51,20 @@ export default function AdminHeader({ onMenuClick, onSearchClick }) {
                 {/* Search Bar */}
                 <button
                     onClick={onSearchClick}
-                    className="hidden md:flex items-center w-64 lg:w-96 px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-gray-400 hover:border-gray-300 hover:bg-white transition-all group"
+                    className="hidden md:flex items-center w-64 lg:w-96 px-4 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-400 dark:text-gray-500 hover:border-gray-300 dark:hover:border-gray-600 hover:bg-white dark:hover:bg-gray-700 transition-all group"
                 >
                     <Search size={18} className="mr-3 group-hover:text-indigo-500" />
                     <span className="text-sm">Search anything...</span>
-                    <span className="ml-auto text-xs font-semibold border border-gray-200 rounded px-1.5 py-0.5">Ctrl K</span>
+                    <span className="ml-auto text-xs font-semibold border border-gray-200 dark:border-gray-600 rounded px-1.5 py-0.5">Ctrl K</span>
+                </button>
+
+                {/* Theme Toggle */}
+                <button
+                    onClick={toggleTheme}
+                    className="p-2 rounded-full text-gray-400 hover:text-gray-500 dark:text-gray-400 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                    title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+                >
+                    {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
                 </button>
             </div>
 

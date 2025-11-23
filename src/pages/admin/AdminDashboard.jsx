@@ -126,7 +126,7 @@ export default function AdminDashboard() {
                     </button>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                    <button onClick={refresh} className="flex items-center px-3 py-2 bg-white border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">
+                    <button onClick={refresh} className="flex items-center px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700">
                         <RefreshCw size={16} className="mr-2" />
                         Refresh
                     </button>
@@ -558,110 +558,66 @@ export default function AdminDashboard() {
                     </div>
                 </div>
             </div>
-
-            {/* SECTION 9: QUICK STATS GRID */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <QuickStatCard icon={Shield} label="Badges Generated" value="0" color="purple" link="/admin/badges" />
-                <QuickStatCard icon={Mail} label="Emails Sent" value="0" color="blue" link="/admin/emails" />
-                <QuickStatCard icon={Clock} label="Avg Reg Time" value="2.5m" color="green" />
-                <QuickStatCard icon={Database} label="Storage Used" value="45%" color="gray" />
-            </div>
         </div>
     );
 }
 
-function MetricCard({ title, value, icon: Icon, color, trend, subMetrics, percentage, progressBar, alert, subtext }) {
-    const colorClasses = {
-        blue: "bg-blue-500 text-blue-600 bg-blue-50",
-        green: "bg-green-500 text-green-600 bg-green-50",
-        orange: "bg-orange-500 text-orange-600 bg-orange-50",
-        purple: "bg-purple-500 text-purple-600 bg-purple-50",
-        red: "bg-red-500 text-red-600 bg-red-50",
-        gray: "bg-gray-500 text-gray-600 bg-gray-50",
+// Helper Components
+function MetricCard({ title, value, icon: Icon, color, trend, percentage, progressBar, subMetrics, alert, subtext }) {
+    const colors = {
+        blue: 'bg-blue-50 text-blue-600',
+        green: 'bg-green-50 text-green-600',
+        orange: 'bg-orange-50 text-orange-600',
+        purple: 'bg-purple-50 text-purple-600',
+        red: 'bg-red-50 text-red-600',
+        gray: 'bg-gray-50 text-gray-600'
     };
 
-    const [bg, text, lightBg] = colorClasses[color].split(" ");
-
     return (
-        <div className={`bg-white rounded-lg shadow-sm p-6 border-l-4 ${alert ? 'border-red-500 animate-pulse' : `border-${color}-500`}`}>
-            <div className="flex justify-between items-start">
-                <div>
-                    <p className="text-sm font-medium text-gray-500">{title}</p>
-                    <h3 className="text-3xl font-bold text-gray-900 mt-1">{value}</h3>
+        <div className={`bg-white rounded-lg shadow-sm p-6 border-l-4 ${alert ? 'border-red-500' : `border-${color}-500`}`}>
+            <div className="flex items-center justify-between mb-4">
+                <div className={`p-2 rounded-lg ${colors[color]}`}>
+                    <Icon size={24} />
                 </div>
-                <div className={`p-3 rounded-lg ${lightBg}`}>
-                    <Icon className={`h-6 w-6 ${text}`} />
-                </div>
-            </div>
-
-            {trend && (
-                <div className="flex items-center mt-2">
-                    {trend.positive ? <ArrowUp size={16} className="text-green-500" /> : <ArrowDown size={16} className="text-red-500" />}
-                    <span className={`text-xs font-medium ml-1 ${trend.positive ? 'text-green-600' : 'text-red-600'}`}>
+                {trend && (
+                    <span className={`text-xs font-medium px-2 py-1 rounded-full ${trend.positive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                        }`}>
                         {trend.value}
                     </span>
-                </div>
-            )}
+                )}
+            </div>
+            <h3 className="text-gray-500 text-sm font-medium">{title}</h3>
+            <p className="text-2xl font-bold text-gray-900 mt-1">{value}</p>
+            {subtext && <p className={`text-xs mt-1 ${alert ? 'text-red-500 font-medium' : 'text-gray-400'}`}>{subtext}</p>}
 
             {progressBar && (
                 <div className="mt-4">
-                    <div className="flex justify-between text-xs mb-1">
-                        <span className="text-gray-500">{percentage}% of total</span>
+                    <div className="flex justify-between text-xs text-gray-500 mb-1">
+                        <span>Progress</span>
+                        <span>{percentage}%</span>
                     </div>
-                    <div className="w-full bg-gray-100 rounded-full h-2">
+                    <div className="w-full bg-gray-200 rounded-full h-2">
                         <div
-                            className={`h-2 rounded-full ${bg}`}
+                            className={`h-2 rounded-full ${color === 'orange' ? 'bg-orange-500' : 'bg-green-500'}`}
                             style={{ width: `${percentage}%` }}
-                        ></div>
+                        />
                     </div>
                 </div>
             )}
 
             {subMetrics && (
-                <div className="mt-4 space-y-1">
+                <div className="mt-4 space-y-2">
                     {subMetrics.map((metric, idx) => (
-                        <div key={idx} className="flex items-center justify-between text-xs">
-                            <div className="flex items-center">
-                                <div className={`w-2 h-2 rounded-full mr-2 bg-${metric.color}-500`}></div>
-                                <span className="text-gray-500">{metric.label}</span>
-                            </div>
-                            <span className="font-medium text-gray-900">{metric.value}</span>
+                        <div key={idx} className="flex justify-between text-xs">
+                            <span className="text-gray-500">{metric.label}</span>
+                            <span className={`font-medium ${metric.color === 'green' ? 'text-green-600' :
+                                metric.color === 'red' ? 'text-red-600' :
+                                    'text-gray-900'
+                                }`}>{metric.value}</span>
                         </div>
                     ))}
                 </div>
             )}
-
-            {subtext && (
-                <p className={`mt-2 text-xs font-medium ${alert ? 'text-red-600' : 'text-gray-500'}`}>
-                    {subtext}
-                </p>
-            )}
         </div>
     );
-}
-
-function QuickStatCard({ icon: Icon, label, value, color, link }) {
-    const colors = {
-        purple: "text-purple-600 bg-purple-50",
-        blue: "text-blue-600 bg-blue-50",
-        green: "text-green-600 bg-green-50",
-        gray: "text-gray-600 bg-gray-50"
-    };
-
-    const Content = () => (
-        <div className="bg-white rounded-lg shadow-sm p-4 flex items-center space-x-4 hover:shadow-md transition-shadow">
-            <div className={`p-3 rounded-full ${colors[color]}`}>
-                <Icon size={20} />
-            </div>
-            <div>
-                <p className="text-xs text-gray-500 uppercase font-medium">{label}</p>
-                <p className="text-lg font-bold text-gray-900">{value}</p>
-            </div>
-        </div>
-    );
-
-    if (link) {
-        return <Link to={link}><Content /></Link>;
-    }
-    return <Content />;
 }
