@@ -1,179 +1,193 @@
-import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { FileSpreadsheet, Download, Filter, Calendar, Users, Hotel, Utensils, ChevronDown } from 'lucide-react';
-import { supabase } from '../../lib/supabaseClient';
-import {
-    exportCompleteAccommodationList,
-    exportDailyArrivalsReport,
-    exportMealPlanReport,
-    exportCompleteRegistrationList,
-    exportContactList
-} from '../../utils/excelExport';
+import { useState } from 'react';
+import { useDashboardData } from '../../hooks/useDashboardData';
+import { generateComprehensiveReport, exportToExcel } from '../../utils/excelExport';
+import { FileSpreadsheet, Download, Loader, FileText, Users, Home, Utensils } from 'lucide-react';
+import { format } from 'date-fns';
 
-const ReportsPage = () => {
-    const [activeTab, setActiveTab] = useState('registration');
-    const [registrations, setRegistrations] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [filterOpen, setFilterOpen] = useState(false);
+export default function ReportsPage() {
+    const { metrics, loading: dataLoading } = useDashboardData();
+    const [generating, setGenerating] = useState(false);
 
-    useEffect(() => {
-        fetchRegistrations();
-    }, []);
-
-    const fetchRegistrations = async () => {
+    const handleFullExport = async () => {
+        setGenerating(true);
         try {
-            const { data, error } = await supabase
-                .from('registrations')
-                .select('*')
-                .order('created_at', { ascending: false });
-
-            if (error) throw error;
-            setRegistrations(data || []);
+            // Simulate a small delay for UX or fetch fresh data if needed
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            generateComprehensiveReport(metrics.registrations);
         } catch (error) {
-            console.error('Error fetching data:', error);
+            console.error('Export failed:', error);
+            alert('Failed to generate report. Please try again.');
         } finally {
-            setLoading(false);
+            setGenerating(false);
         }
     };
 
-    const tabs = [
-        { id: 'registration', label: 'Registration', icon: Users },
-        { id: 'accommodation', label: 'Accommodation', icon: Hotel },
-        { id: 'meals', label: 'Meal Planning', icon: Utensils },
-        { id: 'contacts', label: 'Contact Lists', icon: FileSpreadsheet },
-    ];
+    const handleSingleExport = (type) => {
+        const timestamp = format(new Date(), 'yyyy-MM-dd_HHmm');
+        let data = [];
+        let fileName = '';
 
-    const renderContent = () => {
-        switch (activeTab) {
-            case 'registration':
-                return (
-                    <div className="space-y-6">
-                        <ReportCard
-                            title="Complete Registration Export"
-                            description="Download all registration data including online, onsite, and member details."
-                            icon={Users}
-                            onDownload={() => exportCompleteRegistrationList(registrations)}
-                        />
-                    </div>
-                );
+        switch (type) {
             case 'accommodation':
-                return (
-                    <div className="space-y-6">
-                        <ReportCard
-                            title="Master Accommodation List"
-                            description="Complete list of all attendees requiring accommodation, separated by type."
-                            icon={Hotel}
-                            onDownload={() => exportCompleteAccommodationList(registrations)}
-                        />
-                        <ReportCard
-                            title="Daily Arrivals Report"
-                            description="Breakdown of expected arrivals by date for logistics planning."
-                            icon={Calendar}
-                            onDownload={() => exportDailyArrivalsReport(registrations)}
-                        />
-                    </div>
-                );
+                data = metrics.registrations
+                    .filter(r => r.needs_accommodation)
+                    .map(r => ({
+                        'Name': r.full_name,
+                        'Gender': r.gender,
+                        'Type': r.accommodation_type,
+                        'Arrival': r.arrival_date,
+                        'Departure': r.departure_date,
+                        'Phone': r.phone
+                    }));
+                fileName = `Accommodation_List_${timestamp}`;
+                break;
             case 'meals':
-                return (
-                    <div className="space-y-6">
-                        <ReportCard
-                            title="Catering Meal Plan"
-                            description="Estimated meal requirements based on attendance and dietary needs."
-                            icon={Utensils}
-                            onDownload={() => exportMealPlanReport(registrations)}
-                        />
-                    </div>
-                );
+                data = metrics.registrations
+                    .filter(r => r.location_type === 'Outside Zaria' && r.participation_mode === 'Onsite')
+                    .map(r => ({
+                        'Name': r.full_name,
+                        'Dietary': r.dietary_requirements || 'None',
+                        'Arrival': r.arrival_date,
+                        'Departure': r.departure_date
+                    }));
+                fileName = `Meal_Plan_${timestamp}`;
+                break;
             case 'contacts':
-                return (
-                    <div className="space-y-6">
-                        <ReportCard
-                            title="Complete Contact Directory"
-                            description="Full list of attendee contact information."
-                            icon={FileSpreadsheet}
-                            onDownload={() => exportContactList(registrations, 'complete')}
-                        />
-                        <ReportCard
-                            title="VIP & Leadership List"
-                            description="Contact details for Reverends, Pastors, and Bishops."
-                            icon={Users}
-                            onDownload={() => exportContactList(registrations, 'vip')}
-                        />
-                    </div>
-                );
+                data = metrics.registrations.map(r => ({
+                    'Name': r.full_name,
+                    'Email': r.email,
+                    'Phone': r.phone,
+                    'Branch': r.church_branch
+                }));
+                fileName = `Contact_List_${timestamp}`;
+                break;
             default:
-                return null;
+                return;
         }
+
+        exportToExcel(data, fileName, type.charAt(0).toUpperCase() + type.slice(1));
     };
+
+    if (dataLoading) {
+        return (
+            <div className="flex h-96 items-center justify-center">
+                <div className="h-12 w-12 animate-spin rounded-full border-4 border-indigo-600 border-t-transparent"></div>
+            </div>
+        );
+    }
 
     return (
-        <div className="min-h-screen bg-slate-50 p-8">
-            <div className="max-w-6xl mx-auto">
-                {/* Header */}
-                <div className="mb-8">
-                    <h1 className="text-3xl font-bold text-slate-900">Reports & Exports</h1>
-                    <p className="text-slate-600">Generate comprehensive reports and export data for planning.</p>
-                </div>
+        <div className="space-y-8">
+            <div>
+                <h1 className="text-2xl font-bold text-gray-900">Reports & Exports</h1>
+                <p className="text-gray-500">Generate and download detailed reports for the event.</p>
+            </div>
 
-                {/* Tabs */}
-                <div className="flex flex-wrap gap-2 mb-8 border-b border-slate-200 pb-1">
-                    {tabs.map((tab) => (
-                        <button
-                            key={tab.id}
-                            onClick={() => setActiveTab(tab.id)}
-                            className={`flex items-center gap-2 px-4 py-2 rounded-t-lg transition-colors relative ${activeTab === tab.id
-                                ? 'text-blue-600 bg-white border-x border-t border-slate-200 font-medium'
-                                : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100'
-                                }`}
-                        >
-                            <tab.icon className="w-4 h-4" />
-                            {tab.label}
-                            {activeTab === tab.id && (
-                                <div className="absolute bottom-[-1px] left-0 right-0 h-1 bg-white" />
-                            )}
-                        </button>
-                    ))}
-                </div>
-
-                {/* Content */}
-                <motion.div
-                    key={activeTab}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.3 }}
-                >
-                    {loading ? (
-                        <div className="flex justify-center py-12">
-                            <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+            {/* Main Export Card */}
+            <div className="bg-indigo-50 rounded-xl p-8 border border-indigo-100">
+                <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+                    <div className="flex items-start space-x-4">
+                        <div className="p-3 bg-indigo-100 rounded-lg text-indigo-600">
+                            <FileSpreadsheet size={32} />
                         </div>
-                    ) : (
-                        renderContent()
-                    )}
-                </motion.div>
+                        <div>
+                            <h3 className="text-lg font-bold text-indigo-900">Comprehensive Event Report</h3>
+                            <p className="text-indigo-700 mt-1 max-w-xl">
+                                This is the master report containing all data sheets: All Registrations, Accommodation List, Meal Planning, Daily Arrivals, and Contact List.
+                            </p>
+                        </div>
+                    </div>
+                    <button
+                        onClick={handleFullExport}
+                        disabled={generating}
+                        className="flex items-center px-6 py-3 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm transition-all"
+                    >
+                        {generating ? (
+                            <>
+                                <Loader size={20} className="animate-spin mr-2" />
+                                Generating...
+                            </>
+                        ) : (
+                            <>
+                                <Download size={20} className="mr-2" />
+                                Download Master Report
+                            </>
+                        )}
+                    </button>
+                </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {/* Accommodation Report */}
+                <ReportCard
+                    title="Accommodation List"
+                    description="List of all attendees requiring accommodation with arrival dates."
+                    icon={Home}
+                    color="green"
+                    onClick={() => handleSingleExport('accommodation')}
+                />
+
+                {/* Meal Planning */}
+                <ReportCard
+                    title="Meal Planning"
+                    description="Dietary requirements and counts for outside Zaria attendees."
+                    icon={Utensils}
+                    color="orange"
+                    onClick={() => handleSingleExport('meals')}
+                />
+
+                {/* Contact List */}
+                <ReportCard
+                    title="Contact List"
+                    description="Names, emails, and phone numbers for all registered attendees."
+                    icon={Users}
+                    color="blue"
+                    onClick={() => handleSingleExport('contacts')}
+                />
+            </div>
+
+            <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Report Definitions</h3>
+                <div className="space-y-4">
+                    <div className="flex gap-4">
+                        <div className="w-48 flex-shrink-0 font-medium text-gray-700">All Registrations</div>
+                        <div className="text-gray-600">Complete raw data of every single registration form submission.</div>
+                    </div>
+                    <div className="flex gap-4">
+                        <div className="w-48 flex-shrink-0 font-medium text-gray-700">Accommodation</div>
+                        <div className="text-gray-600">Filtered list of only those who selected "Yes" for accommodation, grouped by type (General/Hotel).</div>
+                    </div>
+                    <div className="flex gap-4">
+                        <div className="w-48 flex-shrink-0 font-medium text-gray-700">Meal Planning</div>
+                        <div className="text-gray-600">Attendees from "Outside Zaria" who are attending "Onsite". Used for catering estimates.</div>
+                    </div>
+                </div>
             </div>
         </div>
     );
-};
+}
 
-const ReportCard = ({ title, description, icon: Icon, onDownload }) => (
-    <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow flex items-start justify-between">
-        <div className="flex gap-4">
-            <div className="p-3 bg-blue-50 text-blue-600 rounded-lg h-fit">
-                <Icon className="w-6 h-6" />
-            </div>
-            <div>
-                <h3 className="text-lg font-semibold text-slate-900 mb-1">{title}</h3>
-                <p className="text-slate-600 text-sm max-w-md">{description}</p>
-            </div>
-        </div>
+function ReportCard({ title, description, icon: Icon, color, onClick }) {
+    const colors = {
+        green: "bg-green-50 text-green-600 hover:bg-green-100",
+        orange: "bg-orange-50 text-orange-600 hover:bg-orange-100",
+        blue: "bg-blue-50 text-blue-600 hover:bg-blue-100",
+    };
+
+    return (
         <button
-            onClick={onDownload}
-            className="flex items-center gap-2 px-4 py-2 bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-colors"
+            onClick={onClick}
+            className="flex flex-col items-start p-6 bg-white border border-gray-200 rounded-xl hover:shadow-md transition-all text-left w-full group"
         >
-            <Download className="w-4 h-4" />
-            Download Excel
+            <div className={`p-3 rounded-lg mb-4 ${colors[color]} transition-colors`}>
+                <Icon size={24} />
+            </div>
+            <h3 className="text-lg font-semibold text-gray-900 group-hover:text-indigo-600 transition-colors">{title}</h3>
+            <p className="text-sm text-gray-500 mt-2">{description}</p>
+            <div className="mt-4 flex items-center text-sm font-medium text-gray-400 group-hover:text-indigo-600">
+                <Download size={16} className="mr-2" />
+                Download CSV
+            </div>
         </button>
-    </div>
-);
-
-export default ReportsPage;
+    );
+}

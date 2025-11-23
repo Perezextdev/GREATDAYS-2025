@@ -1,329 +1,142 @@
 import * as XLSX from 'xlsx';
-import { format, parseISO, isValid } from 'date-fns';
+import { format } from 'date-fns';
 
-// Helper to format date safely
-const formatDate = (dateString, formatStr = 'MMM dd, yyyy') => {
-    if (!dateString) return '';
-    const date = new Date(dateString);
-    return isValid(date) ? format(date, formatStr) : '';
+export const exportToExcel = (data, fileName, sheetName = 'Sheet1') => {
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, sheetName);
+    XLSX.writeFile(wb, `${fileName}.xlsx`);
 };
 
-// Helper to create a workbook with multiple sheets
-const createWorkbook = () => XLSX.utils.book_new();
+export const generateComprehensiveReport = (registrations) => {
+    const wb = XLSX.utils.book_new();
 
-// Helper to add a sheet to a workbook
-const addSheet = (workbook, data, sheetName) => {
-    const worksheet = XLSX.utils.json_to_sheet(data);
-
-    // Auto-size columns
-    const colWidths = Object.keys(data[0] || {}).map(key => ({
-        wch: Math.max(key.length, ...data.map(row => (row[key] ? row[key].toString().length : 0))) + 2
-    }));
-    worksheet['!cols'] = colWidths;
-
-    XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
-};
-
-// Helper to save workbook
-const saveWorkbook = (workbook, filename) => {
-    XLSX.writeFile(workbook, `${filename}.xlsx`);
-};
-
-/**
- * REPORT 1: ACCOMMODATION LISTS
- */
-export const exportCompleteAccommodationList = (registrations) => {
-    const workbook = createWorkbook();
-    const timestamp = format(new Date(), 'yyyy-MM-dd_HHmm');
-
-    // Filter for accommodation requests
-    const accommodationReqs = registrations.filter(r => r.needs_accommodation);
-
-    // SHEET 1: General Accommodation
-    const generalData = accommodationReqs
-        .filter(r => r.accommodation_type === 'General')
-        .map(r => ({
-            'Registration ID': r.id,
-            'Full Name': r.full_name,
-            'Phone': r.phone_number,
-            'Email': r.email,
-            'Nationality': r.nationality,
-            'Gender': r.gender || '',
-            'Branch': r.branch || 'N/A',
-            'Unit': r.church_unit || 'N/A',
-            'Arrival Date': formatDate(r.arrival_date),
-            'Accommodation Type': r.accommodation_type,
-            'Special Requests': '',
-            'Assigned Room': '',
-            'Checked In': 'No'
-        }));
-    addSheet(workbook, generalData, "General Accommodation");
-
-    // SHEET 2: Hotel Accommodation
-    const hotelData = accommodationReqs
-        .filter(r => r.accommodation_type === 'Hotel')
-        .map(r => ({
-            'Registration ID': r.id,
-            'Full Name': r.full_name,
-            'Phone': r.phone_number,
-            'Preferred Hotel': '',
-            'Confirmation #': '',
-            'Status': 'Pending'
-        }));
-    addSheet(workbook, hotelData, "Hotel Accommodation");
-
-    // SHEET 3: Summary
-    const summaryData = [
-        { 'Category': 'Total Needing Accommodation', 'Count': accommodationReqs.length },
-        { 'Category': 'General Requests', 'Count': generalData.length },
-        { 'Category': 'Hotel/Family Requests', 'Count': hotelData.length }
-    ];
-    addSheet(workbook, summaryData, "Summary");
-
-    saveWorkbook(workbook, `Accommodation_Master_List_${timestamp}`);
-};
-
-/**
- * REPORT 1b: DAILY ARRIVALS
- */
-export const exportDailyArrivalsReport = (registrations) => {
-    const workbook = createWorkbook();
-    const timestamp = format(new Date(), 'yyyy-MM-dd_HHmm');
-
-    // Group by arrival date
-    const arrivalsByDate = registrations.reduce((acc, r) => {
-        if (!r.arrival_date) return acc;
-        const date = formatDate(r.arrival_date, 'yyyy-MM-dd');
-        if (!acc[date]) acc[date] = [];
-        acc[date].push(r);
-        return acc;
-    }, {});
-
-    Object.keys(arrivalsByDate).sort().forEach(date => {
-        const dayData = arrivalsByDate[date].map(r => ({
-            'Arrival Time': '',
-            'Full Name': r.full_name,
-            'Phone': r.phone_number,
-            'From Location': r.location_type || '',
-            'Accommodation': r.needs_accommodation ? r.accommodation_type : 'None',
-            'Transport Needed': 'No',
-            'Picked Up': 'No'
-        }));
-        addSheet(workbook, dayData, `Arrivals - ${date}`);
-    });
-
-    saveWorkbook(workbook, `Daily_Arrivals_${timestamp}`);
-};
-
-/**
- * REPORT 1c: MEAL PLANNING
- */
-export const exportMealPlanReport = (registrations) => {
-    const workbook = createWorkbook();
-    const timestamp = format(new Date(), 'yyyy-MM-dd_HHmm');
-
-    // Filter: Outside Zaria attendees
-    const mealAttendees = registrations.filter(r =>
-        r.participation_mode === 'Onsite' &&
-        r.location_type === 'Outside Zaria'
-    );
-
-    // SHEET 1: Attendee List
-    const attendeeData = mealAttendees.map(r => ({
-        'Full Name': r.full_name,
-        'Phone': r.phone_number,
-        'Arrival': formatDate(r.arrival_date),
-        'Dietary Restrictions': '',
-        'Total Days': ''
-    }));
-    addSheet(workbook, attendeeData, "Meal Attendees");
-
-    // SHEET 2: Daily Counts
-    const summaryData = [
-        { 'Metric': 'Total Attendees with Meals', 'Value': mealAttendees.length },
-        { 'Metric': 'Est. Daily Breakfasts', 'Value': mealAttendees.length },
-        { 'Metric': 'Est. Daily Lunches', 'Value': mealAttendees.length },
-        { 'Metric': 'Est. Daily Dinners', 'Value': mealAttendees.length }
-    ];
-    addSheet(workbook, summaryData, "Planning Summary");
-
-    saveWorkbook(workbook, `Meal_Plan_${timestamp}`);
-};
-
-/**
- * REPORT 2: COMPLETE REGISTRATION EXPORT
- */
-export const exportCompleteRegistrationList = (registrations) => {
-    const workbook = createWorkbook();
-    const timestamp = format(new Date(), 'yyyy-MM-dd_HHmm');
-
-    // SHEET 1: All Registrations
-    const allData = registrations.map(r => ({
-        'ID': r.id,
-        'Date': formatDate(r.created_at),
-        'Title': r.title,
+    // 1. Complete Registration List
+    const allRegsData = registrations.map(r => ({
         'Full Name': r.full_name,
         'Email': r.email,
-        'Phone': r.phone_number,
-        'Nationality': r.nationality,
+        'Phone': r.phone,
+        'Gender': r.gender,
+        'Type': r.registration_type,
         'Mode': r.participation_mode,
-        'Member': r.is_member ? 'Yes' : 'No',
-        'Branch': r.branch || '',
-        'Unit': r.church_unit || '',
-        'Location': r.location_type || '',
-        'Accommodation': r.needs_accommodation ? 'Yes' : 'No',
-        'Arrival': formatDate(r.arrival_date)
+        'Location': r.location_type,
+        'Branch': r.church_branch || 'N/A',
+        'Unit': r.church_unit || 'N/A',
+        'Member Status': r.is_member ? 'Member' : 'Non-Member',
+        'Accommodation': r.accommodation_type || 'None',
+        'Arrival Date': r.arrival_date || 'N/A',
+        'Departure Date': r.departure_date || 'N/A',
+        'Registered At': format(new Date(r.created_at), 'yyyy-MM-dd HH:mm:ss')
     }));
-    addSheet(workbook, allData, "All Registrations");
+    const wsAll = XLSX.utils.json_to_sheet(allRegsData);
+    XLSX.utils.book_append_sheet(wb, wsAll, "All Registrations");
 
-    // SHEET 2: Online Only
-    const onlineData = allData.filter(r => r.Mode === 'Online');
-    addSheet(workbook, onlineData, "Online Participants");
-
-    // SHEET 3: Onsite Only
-    const onsiteData = allData.filter(r => r.Mode === 'Onsite');
-    addSheet(workbook, onsiteData, "Onsite Participants");
-
-    // SHEET 4: Statistics
-    const statsData = [
-        { 'Metric': 'Total Registrations', 'Value': registrations.length },
-        { 'Metric': 'Online', 'Value': onlineData.length },
-        { 'Metric': 'Onsite', 'Value': onsiteData.length },
-        { 'Metric': 'Members', 'Value': registrations.filter(r => r.is_member).length },
-        { 'Metric': 'Non-Members', 'Value': registrations.filter(r => !r.is_member).length }
-    ];
-    addSheet(workbook, statsData, "Statistics");
-
-    saveWorkbook(workbook, `Complete_Registrations_${timestamp}`);
-};
-
-/**
- * REPORT 3: CONTACT LISTS
- */
-export const exportContactList = (registrations, type = 'complete') => {
-    const workbook = createWorkbook();
-    const timestamp = format(new Date(), 'yyyy-MM-dd_HHmm');
-
-    let data = [];
-    let filename = `Contact_List_${type}_${timestamp}`;
-
-    if (type === 'vip') {
-        // Filter for titles like Reverend, Pastor
-        data = registrations
-            .filter(r => ['Reverend', 'Pastor', 'Bishop'].includes(r.title))
-            .map(r => ({
-                'Title': r.title,
-                'Full Name': r.full_name,
-                'Phone': r.phone_number,
-                'Email': r.email,
-                'Branch': r.branch || ''
-            }));
-        filename = `VIP_Leadership_List_${timestamp}`;
-    } else {
-        // Complete list
-        data = registrations.map(r => ({
+    // 2. Accommodation List
+    const accommodationData = registrations
+        .filter(r => r.needs_accommodation)
+        .map(r => ({
             'Full Name': r.full_name,
-            'Phone': r.phone_number,
-            'Email': r.email,
-            'Mode': r.participation_mode,
-            'Country': r.nationality
+            'Gender': r.gender,
+            'Phone': r.phone,
+            'Type': r.accommodation_type,
+            'Arrival': r.arrival_date,
+            'Departure': r.departure_date,
+            'Special Needs': r.special_needs || 'None'
         }));
-    }
+    const wsAccom = XLSX.utils.json_to_sheet(accommodationData);
+    XLSX.utils.book_append_sheet(wb, wsAccom, "Accommodation");
 
-    addSheet(workbook, data, "Contacts");
-    saveWorkbook(workbook, filename);
+    // 3. Meal Planning (Outside Zaria)
+    const mealData = registrations
+        .filter(r => r.location_type === 'Outside Zaria' && r.participation_mode === 'Onsite')
+        .map(r => ({
+            'Full Name': r.full_name,
+            'Dietary Requirements': r.dietary_requirements || 'None',
+            'Arrival': r.arrival_date,
+            'Departure': r.departure_date
+        }));
+    const wsMeals = XLSX.utils.json_to_sheet(mealData);
+    XLSX.utils.book_append_sheet(wb, wsMeals, "Meal Planning");
+
+    // 4. Daily Arrivals
+    const arrivalDates = [...new Set(registrations.map(r => r.arrival_date).filter(Boolean))].sort();
+    const arrivalData = arrivalDates.map(date => {
+        const dailyRegs = registrations.filter(r => r.arrival_date === date);
+        return {
+            'Date': date,
+            'Total Arrivals': dailyRegs.length,
+            'General Accom': dailyRegs.filter(r => r.accommodation_type === 'General').length,
+            'Hotel Accom': dailyRegs.filter(r => r.accommodation_type === 'Hotel').length,
+            'Names': dailyRegs.map(r => r.full_name).join(', ')
+        };
+    });
+    const wsArrivals = XLSX.utils.json_to_sheet(arrivalData);
+    XLSX.utils.book_append_sheet(wb, wsArrivals, "Daily Arrivals");
+
+    // 5. Contact List
+    const contactData = registrations.map(r => ({
+        'Name': r.full_name,
+        'Phone': r.phone,
+        'Email': r.email,
+        'Branch': r.church_branch || 'N/A'
+    }));
+    const wsContacts = XLSX.utils.json_to_sheet(contactData);
+    XLSX.utils.book_append_sheet(wb, wsContacts, "Contacts");
+
+    // Save File
+    const fileName = `GREAT_DAYS_Report_${format(new Date(), 'yyyy-MM-dd_HHmm')}.xlsx`;
+    XLSX.writeFile(wb, fileName);
 };
-
-/**
- * Generic export function
- */
-export const exportToExcel = (data, filename) => {
-    const workbook = createWorkbook();
-    addSheet(workbook, data, "Sheet1");
-    saveWorkbook(workbook, filename);
-};
-
-/**
- * LEGACY FUNCTIONS FOR BACKWARDS COMPATIBILITY
- */
 
 export const exportBadgeManifest = (badges) => {
-    const data = badges.map(badge => ({
-        'Badge Number': badge.badge_number,
-        'Full Name': badge.full_name,
-        'Email': badge.email,
-        'Unit': badge.church_unit,
-        'Branch': badge.branch || 'N/A',
-        'Location': badge.location_type === 'Outside Zaria' ? 'Outside Zaria' : 'Within Zaria',
-        'Meals Included': badge.meal_ticket_issued ? 'Yes' : 'No',
-        'Arrival Date': formatDate(badge.arrival_date),
-        'Print Status': badge.print_status || 'Pending',
-        'Generated': formatDate(badge.created_at)
+    const data = badges.map(b => ({
+        'Badge Number': b.badge_number,
+        'Full Name': b.full_name,
+        'Email': b.email,
+        'Phone': b.phone,
+        'Unit': b.church_unit,
+        'Branch': b.branch || 'N/A',
+        'Location': b.location_type,
+        'Meal Ticket': b.meal_ticket_issued ? 'Yes' : 'No',
+        'Badge URL': b.badge_url,
+        'Generated At': format(new Date(), 'yyyy-MM-dd HH:mm:ss')
     }));
 
-    exportToExcel(data, `Badge_Manifest_${format(new Date(), 'yyyy-MM-dd')}`);
+    exportToExcel(data, `Badge_Manifest_${format(new Date(), 'yyyy-MM-dd_HHmm')}`, 'Badge Manifest');
 };
 
-export const exportDailyArrivals = (arrivalData) => {
-    const data = arrivalData.map(day => ({
-        'Date': formatDate(day.date, 'MMM dd, yyyy (EEEE)'),
-        'Total Arrivals': day.count,
-        'General Accommodation': day.general,
-        'Hotel Accommodation': day.hotel,
-        'Meals Required': day.withMeals,
-        'Within Zaria': day.withinZaria,
-        'Outside Zaria': day.outsideZaria
+export const exportDailyArrivals = (arrivalsData) => {
+    const data = arrivalsData.map(d => ({
+        'Date': format(new Date(d.date), 'yyyy-MM-dd'),
+        'Total Arrivals': d.count,
+        'With Meals': d.withMeals,
+        'Without Meals': d.count - d.withMeals
     }));
-
-    exportToExcel(data, `Daily_Arrivals_${format(new Date(), 'yyyy-MM-dd')}`);
+    exportToExcel(data, `Daily_Arrivals_${format(new Date(), 'yyyy-MM-dd_HHmm')}`, 'Arrivals');
 };
 
 export const exportMealPlan = (mealData) => {
-    const data = mealData.map(day => ({
-        'Date': formatDate(day.date, 'MMM dd, yyyy (EEEE)'),
-        'Breakfast': day.breakfast,
-        'Lunch': day.lunch,
-        'Dinner': day.dinner,
-        'Daily Total': day.total
+    const data = mealData.map(d => ({
+        'Date': format(new Date(d.date), 'yyyy-MM-dd'),
+        'Breakfast': d.breakfast,
+        'Lunch': d.lunch,
+        'Dinner': d.dinner,
+        'Total': d.breakfast + d.lunch + d.dinner
     }));
-
-    // Add summary row
-    const totals = mealData.reduce((acc, day) => ({
-        breakfast: acc.breakfast + day.breakfast,
-        lunch: acc.lunch + day.lunch,
-        dinner: acc.dinner + day.dinner,
-        total: acc.total + day.total
-    }), { breakfast: 0, lunch: 0, dinner: 0, total: 0 });
-
-    data.push({
-        'Date': 'TOTAL',
-        'Breakfast': totals.breakfast,
-        'Lunch': totals.lunch,
-        'Dinner': totals.dinner,
-        'Daily Total': totals.total
-    });
-
-    exportToExcel(data, `Meal_Plan_${format(new Date(), 'yyyy-MM-dd')}`);
+    exportToExcel(data, `Meal_Plan_${format(new Date(), 'yyyy-MM-dd_HHmm')}`, 'Meals');
 };
 
 export const exportAccommodationList = (registrations) => {
-    const onsiteRegs = registrations
-        .filter(reg => reg.participation_mode === 'Onsite' && reg.needs_accommodation)
-        .sort((a, b) => new Date(a.arrival_date) - new Date(b.arrival_date));
-
-    const data = onsiteRegs.map(reg => ({
-        'Full Name': reg.full_name,
-        'Email': reg.email,
-        'Phone': reg.phone_number,
-        'Accommodation Type': reg.accommodation_type === 'General' ? 'General' : 'Hotel',
-        'Arrival Date': formatDate(reg.arrival_date),
-        'Duration (nights)': '', // Calc if departure exists
-        'Location': reg.location_type === 'Outside Zaria' ? 'Outside Zaria' : 'Within Zaria',
-        'Meals Included': reg.location_type === 'Outside Zaria' ? 'Yes' : 'No',
-        'Unit': reg.church_unit,
-        'Branch': reg.branch || 'N/A'
-    }));
-
-    exportToExcel(data, `Accommodation_List_${format(new Date(), 'yyyy-MM-dd')}`);
+    const data = registrations
+        .filter(r => r.needs_accommodation)
+        .map(r => ({
+            'Full Name': r.full_name,
+            'Gender': r.gender,
+            'Type': r.accommodation_type,
+            'Arrival': r.arrival_date,
+            'Departure': r.departure_date,
+            'Special Needs': r.special_needs || 'None',
+            'Phone': r.phone
+        }));
+    exportToExcel(data, `Accommodation_List_${format(new Date(), 'yyyy-MM-dd_HHmm')}`, 'Accommodation');
 };
-

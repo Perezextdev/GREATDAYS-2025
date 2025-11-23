@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabaseClient';
 import {
     Search,
@@ -10,14 +11,19 @@ import {
     Mail,
     Trash2,
     Edit,
-    Eye
+    Eye,
+    Users,
+    MapPin,
+    Home
 } from 'lucide-react';
 import { exportToExcel } from '../../utils/excelExport';
 import EditRegistrationModal from '../../components/admin/EditRegistrationModal';
 import RegistrationDetailModal from '../../components/admin/RegistrationDetailModal';
+import BulkActions from '../../components/admin/BulkActions';
 import { useAuth } from '../../context/AuthContext';
 
 export default function RegistrationsPage() {
+    const navigate = useNavigate();
     const { hasPermission } = useAuth();
     const [registrations, setRegistrations] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -33,6 +39,15 @@ export default function RegistrationsPage() {
     const [page, setPage] = useState(1);
     const [itemsPerPage] = useState(25);
 
+    // Analytics State
+    const [analytics, setAnalytics] = useState({
+        total: 0,
+        members: 0,
+        nonMembers: 0,
+        withinZaria: 0,
+        outsideZaria: 0
+    });
+
     useEffect(() => {
         fetchRegistrations();
     }, []);
@@ -47,10 +62,44 @@ export default function RegistrationsPage() {
 
             if (error) throw error;
             setRegistrations(data);
+            calculateAnalytics(data);
         } catch (error) {
             console.error('Error fetching registrations:', error);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const calculateAnalytics = (data) => {
+        const total = data.length;
+        const members = data.filter(r => r.church_unit).length; // Assuming church_unit implies membership or check specific field if available
+        const nonMembers = total - members;
+        const withinZaria = data.filter(r => r.location_type === 'Within Zaria').length;
+        const outsideZaria = data.filter(r => r.location_type === 'Outside Zaria').length;
+
+        setAnalytics({ total, members, nonMembers, withinZaria, outsideZaria });
+    };
+
+    const handleDelete = async (ids) => {
+        if (!window.confirm(`Are you sure you want to delete ${ids.length} registration(s)? This action cannot be undone.`)) {
+            return;
+        }
+
+        try {
+            const { error } = await supabase
+                .from('registrations')
+                .delete()
+                .in('id', ids);
+
+            if (error) throw error;
+
+            setRegistrations(prev => prev.filter(r => !ids.includes(r.id)));
+            setSelectedRows([]);
+            calculateAnalytics(registrations.filter(r => !ids.includes(r.id))); // Recalculate locally
+            alert('Registration(s) deleted successfully.');
+        } catch (error) {
+            console.error('Error deleting registrations:', error);
+            alert('Failed to delete registrations.');
         }
     };
 
@@ -115,11 +164,55 @@ export default function RegistrationsPage() {
         }
     };
 
+    const bulkActions = [
+        {
+            label: 'Export Selected',
+            icon: <Download size={18} />,
+            onClick: () => {
+                const selectedData = registrations.filter(r => selectedRows.includes(r.id));
+                const dataToExport = selectedData.map(reg => ({
+                    'Full Name': reg.full_name,
+                    'Email': reg.email,
+                    'Phone': reg.phone_number,
+                    'Mode': reg.participation_mode,
+                    'Location': reg.location_type,
+                    'Church Unit': reg.church_unit,
+                    'Accommodation': reg.accommodation_type,
+                    'Arrival Date': reg.arrival_date,
+                    'Registered At': new Date(reg.created_at).toLocaleString()
+                }));
+                exportToExcel(dataToExport, 'GreatDays_Selected_Registrations');
+                setSelectedRows([]);
+            }
+        },
+        {
+            label: 'Send Email',
+            icon: <Mail size={18} />,
+            onClick: () => {
+                alert(`Sending email to ${selectedRows.length} recipients (Mock Action)`);
+                setSelectedRows([]);
+            }
+        },
+        {
+            label: 'Delete',
+            icon: <Trash2 size={18} />,
+            variant: 'danger',
+            onClick: () => handleDelete(selectedRows)
+        }
+    ];
+
     return (
         <div className="space-y-6">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <h1 className="text-2xl font-bold text-gray-900">Registrations</h1>
                 <div className="flex gap-2">
+                    <button
+                        onClick={() => navigate('/admin/registrations/new')}
+                        className="flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+                    >
+                        <Users size={18} className="mr-2" />
+                        New Registration
+                    </button>
                     <button
                         onClick={handleExport}
                         className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
@@ -127,6 +220,46 @@ export default function RegistrationsPage() {
                         <Download size={18} className="mr-2" />
                         Export Excel
                     </button>
+                </div>
+            </div>
+
+            {/* Analytics Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200 flex items-center">
+                    <div className="p-3 rounded-full bg-indigo-100 text-indigo-600 mr-4">
+                        <Users size={24} />
+                    </div>
+                    <div>
+                        <p className="text-sm text-gray-500">Total Registrations</p>
+                        <p className="text-2xl font-bold text-gray-900">{analytics.total}</p>
+                        <p className="text-xs text-gray-400">All time</p>
+                    </div>
+                </div>
+                <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200 flex items-center">
+                    <div className="p-3 rounded-full bg-blue-100 text-blue-600 mr-4">
+                        <Home size={24} />
+                    </div>
+                    <div>
+                        <p className="text-sm text-gray-500">Member vs Non-Member</p>
+                        <div className="flex gap-2 text-sm">
+                            <span className="font-semibold text-gray-900">{analytics.members}</span> Members
+                            <span className="text-gray-300">|</span>
+                            <span className="font-semibold text-gray-900">{analytics.nonMembers}</span> Guests
+                        </div>
+                    </div>
+                </div>
+                <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200 flex items-center">
+                    <div className="p-3 rounded-full bg-green-100 text-green-600 mr-4">
+                        <MapPin size={24} />
+                    </div>
+                    <div>
+                        <p className="text-sm text-gray-500">Location Breakdown</p>
+                        <div className="flex gap-2 text-sm">
+                            <span className="font-semibold text-gray-900">{analytics.withinZaria}</span> Zaria
+                            <span className="text-gray-300">|</span>
+                            <span className="font-semibold text-gray-900">{analytics.outsideZaria}</span> Outside
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -267,6 +400,15 @@ export default function RegistrationsPage() {
                                                     <Edit size={18} />
                                                 </button>
                                             )}
+                                            {hasPermission('edit_delete') && (
+                                                <button
+                                                    onClick={() => handleDelete([reg.id])}
+                                                    className="text-red-600 hover:text-red-900 mx-1"
+                                                    title="Delete"
+                                                >
+                                                    <Trash2 size={18} />
+                                                </button>
+                                            )}
                                         </td>
                                     </tr>
                                 ))
@@ -319,6 +461,12 @@ export default function RegistrationsPage() {
                     onClose={() => setViewingReg(null)}
                 />
             )}
+
+            <BulkActions
+                selectedCount={selectedRows.length}
+                onClearSelection={() => setSelectedRows([])}
+                actions={bulkActions}
+            />
         </div>
     );
 }

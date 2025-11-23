@@ -7,9 +7,9 @@ export const useAuth = () => useContext(AuthContext);
 
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
-    const [adminProfile, setAdminProfile] = useState(null);
     const [loading, setLoading] = useState(true);
     const [isAdmin, setIsAdmin] = useState(false);
+    const [role, setRole] = useState(null);
 
     useEffect(() => {
         // Check active session
@@ -19,10 +19,12 @@ export const AuthProvider = ({ children }) => {
 
                 if (session?.user) {
                     setUser(session.user);
-                    await fetchAdminProfile(session.user.email);
-                } else {
-                    setLoading(false);
+                    // Get role from user metadata
+                    const userRole = session.user.user_metadata?.role || 'viewer';
+                    setRole(userRole);
+                    setIsAdmin(true);
                 }
+                setLoading(false);
             } catch (error) {
                 console.error('Error checking session:', error);
                 setLoading(false);
@@ -35,55 +37,19 @@ export const AuthProvider = ({ children }) => {
         const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
             if (session?.user) {
                 setUser(session.user);
-                await fetchAdminProfile(session.user.email);
+                const userRole = session.user.user_metadata?.role || 'viewer';
+                setRole(userRole);
+                setIsAdmin(true);
             } else {
                 setUser(null);
-                setAdminProfile(null);
+                setRole(null);
                 setIsAdmin(false);
-                setLoading(false);
             }
+            setLoading(false);
         });
 
         return () => subscription.unsubscribe();
     }, []);
-
-    const fetchAdminProfile = async (email) => {
-        try {
-            const { data, error } = await supabase
-                .from('admin_users')
-                .select('*')
-                .eq('email', email)
-                .single();
-
-            if (error || !data) {
-                console.warn('User is authenticated but not found in admin_users');
-                setIsAdmin(false);
-                setAdminProfile(null);
-            } else if (!data.is_active) {
-                console.warn('User is authenticated but is_active is false');
-                setIsAdmin(false);
-                setAdminProfile(null);
-            } else {
-                setAdminProfile(data);
-                setIsAdmin(true);
-
-                // Update last login - wrap in try/catch to avoid blocking
-                try {
-                    await supabase
-                        .from('admin_users')
-                        .update({ last_login: new Date().toISOString() })
-                        .eq('id', data.id);
-                } catch (updateError) {
-                    console.warn('Failed to update last_login:', updateError);
-                }
-            }
-        } catch (error) {
-            console.error('Error fetching admin profile:', error);
-            setIsAdmin(false);
-        } finally {
-            setLoading(false);
-        }
-    };
 
     const login = async (email, password) => {
         const { data, error } = await supabase.auth.signInWithPassword({
@@ -91,51 +57,53 @@ export const AuthProvider = ({ children }) => {
             password,
         });
         if (error) throw error;
+        return data;
+    };
 
-        if (data.user) {
-            await fetchAdminProfile(data.user.email);
-        }
+    const signup = async (email, password, fullName, userRole = 'super_admin') => {
+        const { data, error } = await supabase.auth.signUp({
+            email,
+            password,
+            options: {
+                data: {
+                    full_name: fullName,
+                    role: userRole
+                }
+            }
+        });
+        if (error) throw error;
         return data;
     };
 
     const logout = async () => {
         await supabase.auth.signOut();
         setUser(null);
-        setAdminProfile(null);
+        setRole(null);
         setIsAdmin(false);
     };
 
-    const hasPermission = (requiredRole) => {
-        if (!adminProfile || !adminProfile.role) return false;
-        if (adminProfile.role === 'super_admin') return true;
+    const hasPermission = (requiredPermission) => {
+        if (!role) return false;
+        if (role === 'super_admin') return true;
 
-        // Role hierarchy or specific checks
-        switch (requiredRole) {
-            case 'manage_registrations':
-                return ['super_admin', 'coordinator'].includes(adminProfile.role);
-            case 'view_registrations':
-                return ['super_admin', 'coordinator', 'support_agent', 'viewer'].includes(adminProfile.role);
-            case 'manage_testimonials':
-                return ['super_admin', 'coordinator'].includes(adminProfile.role);
-            case 'manage_support':
-                return ['super_admin', 'support_agent'].includes(adminProfile.role);
-            case 'manage_badges':
-                return ['super_admin', 'coordinator'].includes(adminProfile.role);
-            case 'manage_settings':
-                return ['super_admin'].includes(adminProfile.role);
-            case 'edit_delete':
-                return ['super_admin', 'coordinator'].includes(adminProfile.role); // General edit/delete permission
-            default:
-                return false;
-        }
+        // Role hierarchy and permissions
+        const permissions = {
+            super_admin: ['manage_registrations', 'view_registrations', 'manage_testimonials', 'manage_support', 'manage_badges', 'manage_settings', 'edit_delete'],
+            coordinator: ['manage_registrations', 'view_registrations', 'manage_testimonials', 'manage_badges', 'edit_delete'],
+            support_agent: ['view_registrations', 'manage_support'],
+            viewer: ['view_registrations']
+        };
+
+        return permissions[role]?.includes(requiredPermission) || false;
     };
 
     const value = {
         user,
-        adminProfile,
+        role,
         isAdmin,
         loading,
         login,
+        signup,
         logout,
         hasPermission
     };

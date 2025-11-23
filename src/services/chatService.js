@@ -17,7 +17,12 @@ class ChatService {
         const stored = localStorage.getItem(this.storageKey);
         if (stored) {
             try {
-                return JSON.parse(stored);
+                const session = JSON.parse(stored);
+                // Validate session structure
+                if (this.validateSession(session)) {
+                    return session;
+                }
+                console.warn('Invalid session structure, creating new session');
             } catch (e) {
                 console.error('Error parsing chat session:', e);
             }
@@ -28,8 +33,54 @@ class ChatService {
             id: this.generateSessionId(),
             messages: [],
             createdAt: new Date().toISOString(),
-            escalated: false
+            escalated: false,
+            userInfo: null
         };
+
+        this.saveSession(newSession);
+        return newSession;
+    }
+
+    /**
+     * Validate session structure
+     */
+    validateSession(session) {
+        return session &&
+            typeof session === 'object' &&
+            session.id &&
+            Array.isArray(session.messages) &&
+            session.createdAt;
+    }
+
+    /**
+     * Save session to localStorage
+     */
+    saveSession(session) {
+        localStorage.setItem(this.storageKey, JSON.stringify(session));
+    }
+
+    /**
+     * Save user info to session
+     */
+    saveUserInfo(userInfo) {
+        const session = this.getSession();
+        session.userInfo = userInfo;
+        this.saveSession(session);
+    }
+
+    /**
+     * Get user info from session
+     */
+    getUserInfo() {
+        const session = this.getSession();
+        return session.userInfo || null;
+    }
+
+    /**
+     * Add message to session
+     */
+    addMessage(role, content) {
+        const session = this.getSession();
         const message = {
             id: Date.now(),
             role, // 'user' or 'assistant'
@@ -66,6 +117,11 @@ class ChatService {
      * Escalate chat to support request
      */
     async escalateToSupport(userInfo) {
+        // Validate user info
+        if (!userInfo || !userInfo.name || !userInfo.email) {
+            throw new Error('User information is required for support escalation');
+        }
+
         const session = this.getSession();
 
         try {
@@ -74,30 +130,42 @@ class ChatService {
                 .map(msg => `[${msg.role.toUpperCase()}]: ${msg.content}`)
                 .join('\n\n');
 
+            // Validate we have messages to escalate
+            if (session.messages.length === 0) {
+                throw new Error('No conversation to escalate');
+            }
+
             // Create support request
             const { data, error } = await supabase
                 .from('support_requests')
                 .insert([{
-                    name: userInfo.name || 'Chat User',
-                    email: userInfo.email || 'noreply@greatdays2025.com',
+                    name: userInfo.name,
+                    email: userInfo.email,
                     subject: 'Chat Escalation - Assistance Needed',
-                    message: `This request was escalated from the chatbot.\n\n--- CHAT HISTORY ---\n\n${chatHistory}`,
+                    message: `This request was escalated from the chatbot.\n\nUser: ${userInfo.name} (${userInfo.email})\n\n--- CHAT HISTORY ---\n\n${chatHistory}`,
                     priority: 'medium',
                     status: 'open',
                     source: 'chatbot'
                 }])
                 .select();
 
-            if (error) throw error;
+            if (error) {
+                console.error('Supabase error during escalation:', error);
+                throw new Error(`Failed to create support request: ${error.message}`);
+            }
+
+            if (!data || data.length === 0) {
+                throw new Error('No data returned from support request creation');
+            }
 
             // Mark session as escalated
             session.escalated = true;
-            session.supportRequestId = data[0]?.id;
+            session.supportRequestId = data[0].id;
             this.saveSession(session);
 
             return {
                 success: true,
-                requestId: data[0]?.id
+                requestId: data[0].id
             };
         } catch (error) {
             console.error('Error escalating to support:', error);

@@ -117,6 +117,14 @@ export const CHATBOT_CONFIG = {
     offlineMessage: "Our support team is currently offline. Please leave a message and we'll get back to you as soon as possible."
 };
 
+// OpenAI configuration
+export const OPENAI_CONFIG = {
+    apiUrl: 'https://api.openai.com/v1/chat/completions',
+    model: 'gpt-3.5-turbo', // Fast and cost-effective
+    maxTokens: 500,
+    temperature: 0.7
+};
+
 // OpenRouter configuration
 export const OPENROUTER_CONFIG = {
     apiUrl: 'https://openrouter.ai/api/v1/chat/completions',

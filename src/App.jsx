@@ -7,6 +7,7 @@ import CTA from './components/CTA';
 import Footer from './components/Footer';
 import Register from './pages/Register';
 import SubmitTestimonyPage from './pages/SubmitTestimonyPage';
+import TestimoniesPage from './pages/TestimoniesPage';
 import AboutPage from './pages/AboutPage';
 import ScrollToTop from './components/ScrollToTop';
 import ChatBot from './components/ChatBot';
@@ -18,11 +19,24 @@ import AdminLayout from './components/admin/AdminLayout';
 import ProtectedRoute from './components/admin/ProtectedRoute';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import RegistrationsPage from './pages/admin/RegistrationsPage';
+import NewRegistrationPage from './pages/admin/NewRegistrationPage';
+import ArrivalsPage from './pages/admin/ArrivalsPage';
+import AccommodationPage from './pages/admin/AccommodationPage';
+import MealsPage from './pages/admin/MealsPage';
 import TestimonialsPage from './pages/admin/TestimonialsPage';
 import BadgesPage from './pages/admin/BadgesPage';
 import SupportRequestsPage from './pages/admin/SupportRequestsPage';
 import AnalyticsPage from './pages/admin/AnalyticsPage';
 import ReportsPage from './pages/admin/ReportsPage';
+import EmailsPage from './pages/admin/EmailsPage';
+import AutomationsPage from './pages/admin/AutomationsPage';
+import SecurityPage from './pages/admin/SecurityPage';
+import ChatbotManagementPage from './pages/admin/ChatbotManagementPage';
+import SettingsPage from './pages/admin/SettingsPage';
+import CheckInPage from './pages/admin/CheckInPage';
+import QuickActionsPage from './pages/admin/QuickActionsPage';
+import EventOverviewPage from './pages/admin/EventOverviewPage';
+import AnnouncementsPage from './pages/admin/AnnouncementsPage';
 
 // Placeholder components for routes we haven't built yet
 // const AdminRegistrations = () => <div className="p-4">Registrations Page (Coming Soon)</div>;
@@ -30,6 +44,7 @@ const AdminTestimonials = () => <div className="p-4">Testimonials Management (Co
 const AdminSupport = () => <div className="p-4">Support Requests (Coming Soon)</div>;
 const AdminBadges = () => <div className="p-4">Badge Management (Coming Soon)</div>;
 import AdminSettings from './pages/admin/AdminSettings';
+import PlaceholderPage from './pages/admin/PlaceholderPage';
 
 function Home() {
   return (
@@ -81,6 +96,11 @@ function App() {
               <AboutPage />
             </PublicLayout>
           } />
+          <Route path="/testimonies" element={
+            <PublicLayout>
+              <TestimoniesPage />
+            </PublicLayout>
+          } />
 
           {/* Admin Routes */}
           <Route path="/admin/login" element={<AdminLoginPage />} />
@@ -90,13 +110,75 @@ function App() {
             <Route element={<AdminLayout />}>
               <Route index element={<Navigate to="/admin/dashboard" replace />} />
               <Route path="dashboard" element={<AdminDashboard />} />
+              <Route path="quick-actions" element={<QuickActionsPage />} />
+
+              {/* Registrations */}
               <Route path="registrations" element={<RegistrationsPage />} />
+              <Route path="registrations/new" element={<NewRegistrationPage />} />
+              <Route path="accommodation" element={<AccommodationPage />} />
+              <Route path="arrivals" element={<ArrivalsPage />} />
+              <Route path="meals" element={<MealsPage />} />
+
+              {/* Communication */}
+              <Route path="emails" element={<EmailsPage />} />
+              <Route path="emails/bulk" element={<PlaceholderPage />} />
+              <Route path="emails/campaigns" element={<PlaceholderPage />} />
+              <Route path="emails/templates" element={<PlaceholderPage />} />
+              <Route path="emails/reports" element={<PlaceholderPage />} />
+              <Route path="sms" element={<PlaceholderPage />} />
+
+              {/* Content */}
               <Route path="testimonials" element={<TestimonialsPage />} />
-              <Route path="support" element={<SupportRequestsPage />} />
               <Route path="badges" element={<BadgesPage />} />
+              <Route path="media" element={<PlaceholderPage />} />
+              <Route path="documents" element={<PlaceholderPage />} />
+
+              {/* Support */}
+              <Route path="support" element={<SupportRequestsPage />} />
+              <Route path="chatbot" element={<ChatbotManagementPage />} />
+              <Route path="contacts" element={<PlaceholderPage />} />
+              <Route path="help" element={<PlaceholderPage />} />
+
+              {/* Reports */}
               <Route path="analytics" element={<AnalyticsPage />} />
               <Route path="reports" element={<ReportsPage />} />
-              <Route path="settings" element={<AdminSettings />} />
+              <Route path="reports/registrations" element={<PlaceholderPage />} />
+              <Route path="reports/accommodation" element={<PlaceholderPage />} />
+              <Route path="reports/meals" element={<PlaceholderPage />} />
+              <Route path="reports/contacts" element={<PlaceholderPage />} />
+              <Route path="reports/custom" element={<PlaceholderPage />} />
+              <Route path="reports/scheduled" element={<PlaceholderPage />} />
+
+              {/* Event */}
+              <Route path="event" element={<EventOverviewPage />} />
+              <Route path="check-in" element={<CheckInPage />} />
+              <Route path="sessions" element={<PlaceholderPage />} />
+              <Route path="live" element={<PlaceholderPage />} />
+              <Route path="announcements" element={<AnnouncementsPage />} />
+              <Route path="schedule" element={<PlaceholderPage />} />
+
+              {/* Team */}
+              <Route path="team/users" element={<PlaceholderPage />} />
+              <Route path="tasks" element={<PlaceholderPage />} />
+              <Route path="chat" element={<PlaceholderPage />} />
+              <Route path="performance" element={<PlaceholderPage />} />
+              <Route path="activity" element={<PlaceholderPage />} />
+
+              {/* System */}
+              <Route path="settings" element={<SettingsPage />} />
+              <Route path="security" element={<SecurityPage />} />
+              <Route path="automations" element={<AutomationsPage />} />
+              <Route path="integrations" element={<PlaceholderPage />} />
+              <Route path="backup" element={<PlaceholderPage />} />
+              <Route path="system" element={<PlaceholderPage />} />
+
+              {/* Help */}
+              <Route path="training" element={<PlaceholderPage />} />
+              <Route path="docs" element={<PlaceholderPage />} />
+              <Route path="changelog" element={<PlaceholderPage />} />
+              <Route path="feedback" element={<PlaceholderPage />} />
+              <Route path="support-contact" element={<PlaceholderPage />} />
+              <Route path="quick-actions" element={<PlaceholderPage />} />
             </Route>
           </Route>
 

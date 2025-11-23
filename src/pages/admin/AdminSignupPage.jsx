@@ -3,9 +3,10 @@ import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Lock, Mail, Eye, EyeOff, ArrowRight, ShieldCheck, User } from "lucide-react";
-import { supabase } from "../../lib/supabaseClient";
+import { useAuth } from "../../context/AuthContext";
 
 export default function AdminSignupPage() {
+    const { signup } = useAuth();
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [fullName, setFullName] = useState("");
@@ -21,41 +22,12 @@ export default function AdminSignupPage() {
         setError("");
 
         try {
-            // 1. Sign up the user
-            const { data: authData, error: authError } = await supabase.auth.signUp({
-                email,
-                password,
-                options: {
-                    data: {
-                        full_name: fullName
-                    }
-                }
-            });
-
-            if (authError) throw authError;
-
-            if (authData.user) {
-                // 2. Insert admin profile (using service role would be better, but we'll use a simple insert)
-                const { error: profileError } = await supabase
-                    .from('admin_users')
-                    .insert({
-                        id: authData.user.id,
-                        email: email,
-                        full_name: fullName,
-                        role: 'super_admin', // Default to super_admin for first signup
-                        is_active: true
-                    });
-
-                if (profileError) {
-                    console.error('Profile creation error:', profileError);
-                    // Don't throw - user is created, just profile failed
-                }
-
-                setSuccess(true);
-                setTimeout(() => {
-                    navigate('/admin/login');
-                }, 2000);
-            }
+            // Use the signup function from AuthContext
+            await signup(email, password, fullName, 'super_admin');
+            setSuccess(true);
+            setTimeout(() => {
+                navigate('/admin/login');
+            }, 2000);
         } catch (err) {
             console.error(err);
             setError(err.message || "Signup failed");

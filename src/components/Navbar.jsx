@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Menu, X } from 'lucide-react';
+import { Menu, X, Shield } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 const Navbar = () => {
     const [scrolled, setScrolled] = useState(false);
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+    const { isAdmin } = useAuth();
 
     useEffect(() => {
         const handleScroll = () => {
@@ -18,7 +20,7 @@ const Navbar = () => {
     const navLinks = [
         { name: 'Home', path: '/' },
         { name: 'About', path: '/about' },
-        { name: 'Testimonials', path: '/submit-testimony' },
+        { name: 'Testimonies', path: '/testimonies' },
         { name: 'Support', path: '/support' },
     ];
 
@@ -65,6 +67,18 @@ const Navbar = () => {
                             Register Now
                         </motion.button>
                     </Link>
+                    {isAdmin && (
+                        <Link
+                            to="/admin/dashboard"
+                            className="p-2 rounded-full bg-slate-800/50 border border-slate-700 hover:bg-slate-700 transition-colors group relative"
+                            title="Admin Panel"
+                        >
+                            <Shield size={20} className="text-blue-400" />
+                            <span className="absolute -bottom-8 right-0 bg-slate-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                                Admin Panel
+                            </span>
+                        </Link>
+                    )}
                 </div>
 
                 {/* Mobile Toggle */}

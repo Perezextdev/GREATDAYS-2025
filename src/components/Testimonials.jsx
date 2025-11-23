@@ -1,39 +1,52 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Star, Quote } from 'lucide-react';
-
-const testimonials = [
-    {
-        name: "Sarah Johnson",
-        role: "Worship Leader",
-        church: "Grace Community Church",
-        image: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=150&q=80",
-        content: "Great Days 2024 was absolutely transformative. The worship atmosphere was unlike anything I've experienced before."
-    },
-    {
-        name: "David Chen",
-        role: "Youth Pastor",
-        church: "City Light Chapel",
-        image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&q=80",
-        content: "My entire youth group was blessed. The teaching was practical and the fellowship was encouraging."
-    },
-    {
-        name: "Emily Davis",
-        role: "Volunteer",
-        church: "Hope Valley",
-        image: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&w=150&q=80",
-        content: "Volunteering at Great Days gave me a new perspective on service. Can't wait for 2025!"
-    },
-    {
-        name: "Michael Wilson",
-        role: "Attendee",
-        church: "New Life Center",
-        image: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=150&q=80",
-        content: "The best week of my year. I left feeling refreshed, challenged, and ready to serve my community."
-    }
-];
+import { Star, Quote, ArrowRight } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { supabase } from '../lib/supabaseClient';
 
 const Testimonials = () => {
+    const [testimonials, setTestimonials] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        fetchTestimonials();
+    }, []);
+
+    const fetchTestimonials = async () => {
+        try {
+            const { data, error } = await supabase
+                .from('testimonials')
+                .select('*')
+                .eq('status', 'approved')
+                .eq('is_visible', true)
+                .order('approved_at', { ascending: false })
+                .limit(8);
+
+            if (error) throw error;
+            setTestimonials(data || []);
+        } catch (error) {
+            console.error('Error fetching testimonials:', error);
+            // Fallback to empty array on error
+            setTestimonials([]);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    if (loading) {
+        return (
+            <section className="py-24 bg-slate-950">
+                <div className="flex justify-center items-center h-64">
+                    <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-500 border-t-transparent"></div>
+                </div>
+            </section>
+        );
+    }
+
+    if (testimonials.length === 0) {
+        return null; // Don't show section if no testimonials
+    }
+
     return (
         <section className="py-24 bg-slate-950 overflow-hidden relative">
             {/* Background Gradients */}
@@ -49,9 +62,16 @@ const Testimonials = () => {
                     <h2 className="text-3xl md:text-5xl font-bold text-white mb-6">
                         Voices of <span className="text-blue-500">Transformation</span>
                     </h2>
-                    <p className="text-slate-400 max-w-2xl mx-auto">
+                    <p className="text-slate-400 max-w-2xl mx-auto mb-8">
                         Hear from those whose lives have been impacted by the power of God in our meetings.
                     </p>
+                    <Link
+                        to="/testimonies"
+                        className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-medium"
+                    >
+                        View All Testimonies
+                        <ArrowRight size={18} />
+                    </Link>
                 </motion.div>
             </div>
 
@@ -79,26 +99,35 @@ const Testimonials = () => {
                                 <div className="flex items-start gap-4 mb-6">
                                     <div className="relative">
                                         <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-blue-500/20">
-                                            <img
-                                                src={testimonial.image}
-                                                alt={testimonial.name}
-                                                className="w-full h-full object-cover"
-                                            />
+                                            {testimonial.profile_photo_url ? (
+                                                <img
+                                                    src={testimonial.profile_photo_url}
+                                                    alt={testimonial.full_name}
+                                                    className="w-full h-full object-cover"
+                                                />
+                                            ) : (
+                                                <div className="w-full h-full bg-blue-600 flex items-center justify-center text-white font-bold">
+                                                    {testimonial.full_name.charAt(0)}
+                                                </div>
+                                            )}
                                         </div>
                                         <div className="absolute -bottom-1 -right-1 bg-blue-600 rounded-full p-1">
                                             <Quote className="w-3 h-3 text-white" />
                                         </div>
                                     </div>
                                     <div>
-                                        <h4 className="text-white font-bold">{testimonial.name}</h4>
-                                        <p className="text-blue-400 text-sm">{testimonial.role}</p>
+                                        <h4 className="text-white font-bold">{testimonial.full_name}</h4>
+                                        <p className="text-blue-400 text-sm">{testimonial.role_title || 'Attendee'}</p>
+                                        {testimonial.church_branch && (
+                                            <p className="text-slate-500 text-xs">{testimonial.church_branch}</p>
+                                        )}
                                     </div>
                                 </div>
                                 <p className="text-slate-300 leading-relaxed italic">
-                                    "{testimonial.content}"
+                                    "{testimonial.testimonial_text}"
                                 </p>
                                 <div className="mt-6 flex gap-1">
-                                    {[...Array(5)].map((_, i) => (
+                                    {[...Array(testimonial.star_rating || 5)].map((_, i) => (
                                         <Star key={i} className="w-4 h-4 fill-yellow-500 text-yellow-500" />
                                     ))}
                                 </div>

@@ -84,6 +84,13 @@ export default function ChatBot() {
         e.preventDefault();
         if (!inputValue.trim() || isTyping) return;
 
+        // Validate user info exists
+        if (!userInfo || !userInfo.name || !userInfo.email) {
+            setError('Please provide your information first.');
+            setShowUserInfoForm(true);
+            return;
+        }
+
         const userMessage = inputValue.trim();
         setInputValue('');
         setError(null);
@@ -103,7 +110,7 @@ export default function ChatBot() {
         setIsTyping(true);
         try {
             if (!aiService.isConfigured()) {
-                throw new Error('AI service is not configured. Please check your API keys.');
+                throw new Error('AI service is not configured. Please contact support.');
             }
 
             const conversationHistory = chatService.getConversationHistory();
@@ -115,8 +122,19 @@ export default function ChatBot() {
             setMessages(prev => [...prev, assistantMsg]);
         } catch (err) {
             console.error('Chat error:', err);
-            setError(err.message || CHATBOT_CONFIG.errorMessage);
-            const errorMsg = chatService.addMessage('assistant', CHATBOT_CONFIG.errorMessage);
+
+            // Provide user-friendly error messages
+            let errorMessage = CHATBOT_CONFIG.errorMessage;
+            if (err.message?.includes('API key')) {
+                errorMessage = 'Our AI assistant is temporarily unavailable. Please try escalating to human support.';
+            } else if (err.message?.includes('network') || err.message?.includes('fetch')) {
+                errorMessage = 'Connection issue detected. Please check your internet and try again.';
+            } else if (err.message?.includes('rate limit')) {
+                errorMessage = 'Too many requests. Please wait a moment and try again.';
+            }
+
+            setError(errorMessage);
+            const errorMsg = chatService.addMessage('assistant', errorMessage);
             setMessages(prev => [...prev, errorMsg]);
         } finally {
             setIsTyping(false);
@@ -125,6 +143,14 @@ export default function ChatBot() {
 
     const handleEscalate = async (e) => {
         e.preventDefault();
+
+        // Validate user info before escalation
+        if (!userInfo || !userInfo.name || !userInfo.email) {
+            setError('User information is required for support escalation.');
+            setShowUserInfoForm(true);
+            setShowEscalation(false);
+            return;
+        }
 
         try {
             // Use stored user info for escalation
@@ -139,7 +165,10 @@ export default function ChatBot() {
             }
         } catch (err) {
             console.error('Escalation error:', err);
-            alert('Failed to escalate request. Please try again.');
+            const errorMessage = 'Failed to escalate request. Please try again or contact support directly.';
+            setError(errorMessage);
+            const errorMsg = chatService.addMessage('assistant', errorMessage);
+            setMessages(prev => [...prev, errorMsg]);
         }
     };
 
@@ -237,7 +266,7 @@ export default function ChatBot() {
                                             placeholder="Enter your full name"
                                             value={userInfoForm.name}
                                             onChange={(e) => setUserInfoForm(prev => ({ ...prev, name: e.target.value }))}
-                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                                             required
                                             autoFocus
                                         />
@@ -249,7 +278,7 @@ export default function ChatBot() {
                                             placeholder="your.email@example.com"
                                             value={userInfoForm.email}
                                             onChange={(e) => setUserInfoForm(prev => ({ ...prev, email: e.target.value }))}
-                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                                             required
                                         />
                                     </div>
@@ -282,8 +311,8 @@ export default function ChatBot() {
                                             )}
                                             <div
                                                 className={`max-w-[75%] rounded-2xl px-4 py-2 ${msg.role === 'user'
-                                                        ? 'bg-blue-600 text-white rounded-br-sm'
-                                                        : 'bg-white text-gray-800 rounded-bl-sm shadow-sm border border-gray-200'
+                                                    ? 'bg-blue-600 text-white rounded-br-sm'
+                                                    : 'bg-white text-gray-800 rounded-bl-sm shadow-sm border border-gray-200'
                                                     }`}
                                             >
                                                 <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
@@ -360,7 +389,7 @@ export default function ChatBot() {
                                                 value={inputValue}
                                                 onChange={(e) => setInputValue(e.target.value)}
                                                 placeholder="Type your message..."
-                                                className="flex-1 px-4 py-2 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                                                className="flex-1 px-4 py-2 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm text-gray-900"
                                                 disabled={isTyping}
                                             />
                                             <button

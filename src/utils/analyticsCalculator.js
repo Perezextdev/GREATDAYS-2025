@@ -1,407 +1,209 @@
-import { format, parseISO, startOfDay, eachDayOfInterval, differenceInDays } from 'date-fns';
+import { format, parseISO, startOfDay, addDays, differenceInDays, isSameDay, isAfter, isBefore } from 'date-fns';
 
-/**
- * Calculate registration trends over time
- */
-export function calculateRegistrationTrends(registrations) {
-    if (!registrations || registrations.length === 0) {
-        return {
-            dailyCounts: [],
-            totalOnline: 0,
-            totalOnsite: 0,
-            peakDay: null,
-            currentRate: 0,
-            projection: 0
-        };
-    }
+export const calculateRegistrationTrends = (registrations) => {
+    if (!registrations.length) return { dailyCounts: [], currentRate: 0, projection: 0, peakDay: null };
 
     // Group by date
-    const dateMap = new Map();
-    let onlineCount = 0;
-    let onsiteCount = 0;
-
-    registrations.forEach(reg => {
+    const dailyMap = registrations.reduce((acc, reg) => {
         const date = format(parseISO(reg.created_at), 'yyyy-MM-dd');
-        const existing = dateMap.get(date) || { date, online: 0, onsite: 0, total: 0 };
-
-        existing.total++;
-        if (reg.participation_mode === 'Online') {
-            existing.online++;
-            onlineCount++;
-        } else {
-            existing.onsite++;
-            onsiteCount++;
+        if (!acc[date]) {
+            acc[date] = { date, total: 0, online: 0, onsite: 0 };
         }
+        acc[date].total++;
+        if (reg.participation_mode === 'Online') acc[date].online++;
+        if (reg.participation_mode === 'Onsite') acc[date].onsite++;
+        return acc;
+    }, {});
 
-        dateMap.set(date, existing);
-    });
+    const dailyCounts = Object.values(dailyMap).sort((a, b) => new Date(a.date) - new Date(b.date));
 
-    // Convert to array and sort
-    const dailyCounts = Array.from(dateMap.values()).sort((a, b) =>
-        a.date.localeCompare(b.date)
-    );
+    // Calculate current rate (last 7 days)
+    const today = new Date();
+    const last7Days = dailyCounts.filter(d => differenceInDays(today, parseISO(d.date)) <= 7);
+    const currentRate = last7Days.length ? Math.round(last7Days.reduce((sum, d) => sum + d.total, 0) / 7) : 0;
+
+    // Simple projection (linear)
+    const daysUntilEvent = differenceInDays(new Date('2025-04-16'), today); // Assuming event date
+    const projection = registrations.length + (currentRate * Math.max(0, daysUntilEvent));
 
     // Find peak day
-    const peakDay = dailyCounts.reduce((max, day) =>
-        day.total > max.total ? day : max
-        , dailyCounts[0]);
+    const peakDay = dailyCounts.reduce((max, current) => (current.total > (max?.total || 0) ? current : max), null);
 
-    // Calculate average daily rate (last 7 days)
-    const recentDays = dailyCounts.slice(-7);
-    const currentRate = recentDays.reduce((sum, day) => sum + day.total, 0) / recentDays.length;
+    return { dailyCounts, currentRate, projection, peakDay };
+};
 
-    // Project total (assuming current rate continues)
-    const eventDate = new Date('2025-04-14');
-    const today = new Date();
-    const daysRemaining = differenceInDays(eventDate, today);
-    const projection = registrations.length + (currentRate * daysRemaining);
+export const calculateDailyArrivals = (registrations) => {
+    const arrivalsMap = registrations
+        .filter(r => r.participation_mode === 'Onsite' && r.arrival_date)
+        .reduce((acc, reg) => {
+            const date = reg.arrival_date;
+            if (!acc[date]) {
+                acc[date] = { date, count: 0, withMeals: 0 };
+            }
+            acc[date].count++;
+            if (reg.meal_ticket_issued) acc[date].withMeals++;
+            return acc;
+        }, {});
 
-    return {
-        dailyCounts,
-        totalOnline: onlineCount,
-        totalOnsite: onsiteCount,
-        peakDay,
-        currentRate: Math.round(currentRate * 10) / 10,
-        projection: Math.round(projection)
-    };
-}
+    const arrivalsByDate = Object.values(arrivalsMap).sort((a, b) => new Date(a.date) - new Date(b.date));
+    const totalArrivals = arrivalsByDate.reduce((sum, d) => sum + d.count, 0);
+    const peakArrivalDate = arrivalsByDate.reduce((max, current) => (current.count > (max?.count || 0) ? current : max), null);
 
-/**
- * Calculate daily arrivals forecast
- */
-export function calculateDailyArrivals(registrations) {
-    if (!registrations || registrations.length === 0) {
-        return {
-            arrivalsByDate: [],
-            peakArrivalDate: null,
-            totalArrivals: 0
-        };
-    }
+    return { arrivalsByDate, totalArrivals, peakArrivalDate };
+};
 
-    // Filter only onsite registrations
-    const onsiteRegs = registrations.filter(reg => reg.participation_mode === 'Onsite');
+export const calculateMealRequirements = (registrations) => {
+    // Filter for onsite attendees outside Zaria
+    const mealAttendees = registrations.filter(r =>
+        r.participation_mode === 'Onsite' &&
+        r.location_type === 'Outside Zaria' &&
+        r.arrival_date &&
+        r.departure_date
+    );
 
-    // Group by arrival date
-    const dateMap = new Map();
+    const dailyMeals = {};
+    const eventDates = []; // Populate with actual event dates if known, or derive from data
 
-    onsiteRegs.forEach(reg => {
-        if (!reg.arrival_date) return;
+    // Derive range from data
+    if (mealAttendees.length) {
+        const dates = mealAttendees.map(r => new Date(r.arrival_date));
+        const minDate = new Date(Math.min(...dates));
+        const maxDate = new Date(Math.max(...mealAttendees.map(r => new Date(r.departure_date))));
 
-        const date = format(parseISO(reg.arrival_date), 'yyyy-MM-dd');
-        const existing = dateMap.get(date) || {
-            date,
-            count: 0,
-            general: 0,
-            hotel: 0,
-            withMeals: 0,
-            withinZaria: 0,
-            outsideZaria: 0
-        };
-
-        existing.count++;
-
-        if (reg.accommodation_type === 'General') existing.general++;
-        if (reg.accommodation_type === 'Hotel') existing.hotel++;
-        if (reg.location_type === 'Outside Zaria') {
-            existing.outsideZaria++;
-            existing.withMeals++;
-        } else {
-            existing.withinZaria++;
+        let curr = minDate;
+        while (curr <= maxDate) {
+            const dateStr = format(curr, 'yyyy-MM-dd');
+            dailyMeals[dateStr] = { date: dateStr, breakfast: 0, lunch: 0, dinner: 0 };
+            curr = addDays(curr, 1);
         }
-
-        dateMap.set(date, existing);
-    });
-
-    // Convert to array and sort
-    const arrivalsByDate = Array.from(dateMap.values()).sort((a, b) =>
-        a.date.localeCompare(b.date)
-    );
-
-    // Find peak arrival date
-    const peakArrivalDate = arrivalsByDate.reduce((max, day) =>
-        day.count > max.count ? day : max
-        , arrivalsByDate[0] || null);
-
-    return {
-        arrivalsByDate,
-        peakArrivalDate,
-        totalArrivals: onsiteRegs.length
-    };
-}
-
-/**
- * Calculate meal requirements
- */
-export function calculateMealRequirements(registrations) {
-    if (!registrations || registrations.length === 0) {
-        return {
-            dailyMeals: [],
-            totalBreakfast: 0,
-            totalLunch: 0,
-            totalDinner: 0,
-            totalMeals: 0
-        };
     }
 
-    // Only count onsite + outside_zaria attendees
-    const mealEligible = registrations.filter(reg =>
-        reg.participation_mode === 'Onsite' && reg.location_type === 'Outside Zaria'
-    );
+    mealAttendees.forEach(reg => {
+        const arrival = parseISO(reg.arrival_date);
+        const departure = parseISO(reg.departure_date);
 
-    // Event dates
-    const eventStart = new Date('2025-04-14');
-    const eventEnd = new Date('2025-04-20');
-    const eventDays = eachDayOfInterval({ start: eventStart, end: eventEnd });
-
-    const dailyMeals = [];
-    let totalBreakfast = 0;
-    let totalLunch = 0;
-    let totalDinner = 0;
-
-    eventDays.forEach(day => {
-        const dateStr = format(day, 'yyyy-MM-dd');
-
-        // Count attendees present on this day
-        const attendeesPresent = mealEligible.filter(reg => {
-            if (!reg.arrival_date || !reg.departure_date) return false;
-
-            const arrival = startOfDay(parseISO(reg.arrival_date));
-            const departure = startOfDay(parseISO(reg.departure_date));
-            const current = startOfDay(day);
-
-            return current >= arrival && current <= departure;
-        });
-
-        const count = attendeesPresent.length;
-
-        dailyMeals.push({
-            date: dateStr,
-            breakfast: count,
-            lunch: count,
-            dinner: count,
-            total: count * 3
-        });
-
-        totalBreakfast += count;
-        totalLunch += count;
-        totalDinner += count;
+        let curr = arrival;
+        while (curr < departure) { // Assume departure day has breakfast only or none? Let's assume full days between
+            const dateStr = format(curr, 'yyyy-MM-dd');
+            if (dailyMeals[dateStr]) {
+                dailyMeals[dateStr].breakfast++;
+                dailyMeals[dateStr].lunch++;
+                dailyMeals[dateStr].dinner++;
+            }
+            curr = addDays(curr, 1);
+        }
     });
 
+    const dailyMealsArray = Object.values(dailyMeals).sort((a, b) => new Date(a.date) - new Date(b.date));
+    const totalMeals = dailyMealsArray.reduce((sum, d) => sum + d.breakfast + d.lunch + d.dinner, 0);
+
     return {
-        dailyMeals,
-        totalBreakfast,
-        totalLunch,
-        totalDinner,
-        totalMeals: totalBreakfast + totalLunch + totalDinner
+        dailyMeals: dailyMealsArray,
+        totalBreakfast: dailyMealsArray.reduce((sum, d) => sum + d.breakfast, 0),
+        totalLunch: dailyMealsArray.reduce((sum, d) => sum + d.lunch, 0),
+        totalDinner: dailyMealsArray.reduce((sum, d) => sum + d.dinner, 0),
+        totalMeals
     };
-}
+};
 
-/**
- * Calculate accommodation statistics
- */
-export function calculateAccommodationStats(registrations) {
-    if (!registrations || registrations.length === 0) {
-        return {
-            generalRequests: 0,
-            hotelRequests: 0,
-            nightlyOccupancy: [],
-            peakOccupancyDate: null,
-            averageStayDuration: 0
-        };
-    }
+export const calculateAccommodationStats = (registrations) => {
+    const accommodationRegs = registrations.filter(r => r.needs_accommodation);
 
-    const onsiteRegs = registrations.filter(reg => reg.participation_mode === 'Onsite');
-
-    const generalRequests = onsiteRegs.filter(reg => reg.accommodation_type === 'General').length;
-    const hotelRequests = onsiteRegs.filter(reg => reg.accommodation_type === 'Hotel').length;
+    const generalRequests = accommodationRegs.filter(r => r.accommodation_type === 'General').length;
+    const hotelRequests = accommodationRegs.filter(r => r.accommodation_type === 'Hotel').length;
 
     // Calculate nightly occupancy
-    const eventStart = new Date('2025-04-14');
-    const eventEnd = new Date('2025-04-20');
-    const eventDays = eachDayOfInterval({ start: eventStart, end: eventEnd });
+    const occupancyMap = {};
+    accommodationRegs.forEach(reg => {
+        if (reg.arrival_date && reg.departure_date) {
+            let curr = parseISO(reg.arrival_date);
+            const end = parseISO(reg.departure_date);
 
-    const nightlyOccupancy = [];
-
-    eventDays.forEach(day => {
-        const dateStr = format(day, 'yyyy-MM-dd');
-
-        const occupants = onsiteRegs.filter(reg => {
-            if (!reg.arrival_date || !reg.departure_date) return false;
-
-            const arrival = startOfDay(parseISO(reg.arrival_date));
-            const departure = startOfDay(parseISO(reg.departure_date));
-            const current = startOfDay(day);
-
-            return current >= arrival && current < departure; // Not counting departure day
-        });
-
-        nightlyOccupancy.push({
-            date: dateStr,
-            general: occupants.filter(r => r.accommodation_type === 'General').length,
-            hotel: occupants.filter(r => r.accommodation_type === 'Hotel').length,
-            total: occupants.length
-        });
-    });
-
-    const peakOccupancyDate = nightlyOccupancy.reduce((max, night) =>
-        night.total > max.total ? night : max
-        , nightlyOccupancy[0] || null);
-
-    // Calculate average stay duration
-    const durations = onsiteRegs
-        .filter(reg => reg.arrival_date && reg.departure_date)
-        .map(reg => differenceInDays(parseISO(reg.departure_date), parseISO(reg.arrival_date)));
-
-    const averageStayDuration = durations.length > 0
-        ? durations.reduce((sum, d) => sum + d, 0) / durations.length
-        : 0;
-
-    return {
-        generalRequests,
-        hotelRequests,
-        nightlyOccupancy,
-        peakOccupancyDate,
-        averageStayDuration: Math.round(averageStayDuration * 10) / 10
-    };
-}
-
-/**
- * Calculate nationality breakdown
- */
-export function calculateNationalityBreakdown(registrations) {
-    if (!registrations || registrations.length === 0) {
-        return {
-            countries: [],
-            totalCountries: 0,
-            internationalCount: 0,
-            localCount: 0
-        };
-    }
-
-    const countryMap = new Map();
-    let internationalCount = 0;
-    let localCount = 0;
-
-    registrations.forEach(reg => {
-        const country = reg.nationality || 'Nigeria';
-        const count = countryMap.get(country) || 0;
-        countryMap.set(country, count + 1);
-
-        if (country === 'Nigeria') {
-            localCount++;
-        } else {
-            internationalCount++;
+            while (curr < end) {
+                const dateStr = format(curr, 'yyyy-MM-dd');
+                if (!occupancyMap[dateStr]) {
+                    occupancyMap[dateStr] = { date: dateStr, general: 0, hotel: 0, total: 0 };
+                }
+                if (reg.accommodation_type === 'General') occupancyMap[dateStr].general++;
+                else if (reg.accommodation_type === 'Hotel') occupancyMap[dateStr].hotel++;
+                occupancyMap[dateStr].total++;
+                curr = addDays(curr, 1);
+            }
         }
     });
 
-    const countries = Array.from(countryMap.entries())
+    const nightlyOccupancy = Object.values(occupancyMap).sort((a, b) => new Date(a.date) - new Date(b.date));
+    const peakOccupancyDate = nightlyOccupancy.reduce((max, current) => (current.total > (max?.total || 0) ? current : max), null);
+
+    // Average stay duration
+    const totalNights = accommodationRegs.reduce((sum, reg) => {
+        if (reg.arrival_date && reg.departure_date) {
+            return sum + differenceInDays(parseISO(reg.departure_date), parseISO(reg.arrival_date));
+        }
+        return sum;
+    }, 0);
+    const averageStayDuration = accommodationRegs.length ? (totalNights / accommodationRegs.length).toFixed(1) : 0;
+
+    return { generalRequests, hotelRequests, nightlyOccupancy, peakOccupancyDate, averageStayDuration };
+};
+
+export const calculateNationalityBreakdown = (registrations) => {
+    const countryMap = registrations.reduce((acc, reg) => {
+        const country = reg.nationality || 'Nigeria'; // Default to Nigeria if missing
+        acc[country] = (acc[country] || 0) + 1;
+        return acc;
+    }, {});
+
+    const countries = Object.entries(countryMap)
         .map(([name, count]) => ({
             name,
             count,
-            percentage: (count / registrations.length * 100).toFixed(1)
+            percentage: ((count / registrations.length) * 100).toFixed(1)
         }))
         .sort((a, b) => b.count - a.count);
 
-    return {
-        countries,
-        totalCountries: countries.length,
-        internationalCount,
-        localCount
-    };
-}
+    const localCount = countryMap['Nigeria'] || 0;
+    const internationalCount = registrations.length - localCount;
 
-/**
- * Calculate branch distribution
- */
-export function calculateBranchDistribution(registrations) {
-    if (!registrations || registrations.length === 0) {
-        return {
-            branches: [],
-            totalBranches: 0
-        };
-    }
+    return { countries, totalCountries: countries.length, localCount, internationalCount };
+};
 
-    // Only count members with branches
-    const members = registrations.filter(reg => reg.is_member && reg.branch);
+export const calculateBranchDistribution = (registrations) => {
+    const branchMap = registrations.reduce((acc, reg) => {
+        if (reg.church_branch) {
+            acc[reg.church_branch] = (acc[reg.church_branch] || 0) + 1;
+        }
+        return acc;
+    }, {});
 
-    const branchMap = new Map();
-
-    members.forEach(reg => {
-        const count = branchMap.get(reg.branch) || 0;
-        branchMap.set(reg.branch, count + 1);
-    });
-
-    const branches = Array.from(branchMap.entries())
-        .map(([name, count]) => ({
-            name,
-            count,
-            percentage: (count / members.length * 100).toFixed(1)
-        }))
+    const branches = Object.entries(branchMap)
+        .map(([name, count]) => ({ name, count }))
         .sort((a, b) => b.count - a.count);
 
-    return {
-        branches,
-        totalBranches: branches.length
-    };
-}
+    return { branches };
+};
 
-/**
- * Calculate unit distribution
- */
-export function calculateUnitDistribution(registrations) {
-    if (!registrations || registrations.length === 0) {
-        return {
-            units: [],
-            totalUnits: 0
-        };
-    }
+export const calculateUnitDistribution = (registrations) => {
+    const unitMap = registrations.reduce((acc, reg) => {
+        if (reg.church_unit) {
+            acc[reg.church_unit] = (acc[reg.church_unit] || 0) + 1;
+        }
+        return acc;
+    }, {});
 
-    const unitMap = new Map();
-
-    registrations.forEach(reg => {
-        if (!reg.church_unit) return;
-        const count = unitMap.get(reg.church_unit) || 0;
-        unitMap.set(reg.church_unit, count + 1);
-    });
-
-    const units = Array.from(unitMap.entries())
-        .map(([name, count]) => ({
-            name,
-            count,
-            percentage: (count / registrations.length * 100).toFixed(1)
-        }))
+    const units = Object.entries(unitMap)
+        .map(([name, count]) => ({ name, count }))
         .sort((a, b) => b.count - a.count);
 
-    return {
-        units,
-        totalUnits: units.length
-    };
-}
+    return { units };
+};
 
-/**
- * Calculate mode and location statistics
- */
-export function calculateModeLocationStats(registrations) {
-    if (!registrations || registrations.length === 0) {
-        return {
-            onlineCount: 0,
-            onsiteCount: 0,
-            withinZariaCount: 0,
-            outsideZariaCount: 0,
-            modePercentages: { online: 0, onsite: 0 },
-            locationPercentages: { within: 0, outside: 0 }
-        };
-    }
+export const calculateModeLocationStats = (registrations) => {
+    const onlineCount = registrations.filter(r => r.participation_mode === 'Online').length;
+    const onsiteCount = registrations.filter(r => r.participation_mode === 'Onsite').length;
 
-    const onlineCount = registrations.filter(reg => reg.participation_mode === 'Online').length;
-    const onsiteCount = registrations.filter(reg => reg.participation_mode === 'Onsite').length;
-
-    // Location only applies to onsite
-    const onsiteRegs = registrations.filter(reg => reg.participation_mode === 'Onsite');
-    const withinZariaCount = onsiteRegs.filter(reg => reg.location_type === 'Within Zaria').length;
-    const outsideZariaCount = onsiteRegs.filter(reg => reg.location_type === 'Outside Zaria').length;
-
-    const total = registrations.length;
+    const withinZariaCount = registrations.filter(r => r.location_type === 'Within Zaria').length;
+    const outsideZariaCount = registrations.filter(r => r.location_type === 'Outside Zaria').length;
 
     return {
         onlineCount,
@@ -409,12 +211,12 @@ export function calculateModeLocationStats(registrations) {
         withinZariaCount,
         outsideZariaCount,
         modePercentages: {
-            online: ((onlineCount / total) * 100).toFixed(1),
-            onsite: ((onsiteCount / total) * 100).toFixed(1)
+            online: ((onlineCount / registrations.length) * 100).toFixed(1),
+            onsite: ((onsiteCount / registrations.length) * 100).toFixed(1)
         },
         locationPercentages: {
-            within: onsiteRegs.length > 0 ? ((withinZariaCount / onsiteRegs.length) * 100).toFixed(1) : 0,
-            outside: onsiteRegs.length > 0 ? ((outsideZariaCount / onsiteRegs.length) * 100).toFixed(1) : 0
+            within: onsiteCount ? ((withinZariaCount / onsiteCount) * 100).toFixed(1) : 0,
+            outside: onsiteCount ? ((outsideZariaCount / onsiteCount) * 100).toFixed(1) : 0
         }
     };
-}
+};
