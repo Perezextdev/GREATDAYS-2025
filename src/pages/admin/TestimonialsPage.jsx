@@ -94,23 +94,70 @@ export default function TestimonialsPage() {
         }
     };
 
+    const [showAddModal, setShowAddModal] = useState(false);
+    const [newTestimonial, setNewTestimonial] = useState({
+        full_name: '',
+        church_branch: '',
+        testimonial_text: '',
+        star_rating: 5,
+        profile_photo_url: ''
+    });
+
+    const handleAddTestimonial = async (e) => {
+        e.preventDefault();
+        try {
+            const { error } = await supabase
+                .from('testimonials')
+                .insert([{
+                    ...newTestimonial,
+                    status: 'approved',
+                    is_visible: true,
+                    approved_at: new Date().toISOString()
+                }]);
+
+            if (error) throw error;
+
+            setShowAddModal(false);
+            setNewTestimonial({
+                full_name: '',
+                church_branch: '',
+                testimonial_text: '',
+                star_rating: 5,
+                profile_photo_url: ''
+            });
+            fetchTestimonials();
+            alert('Testimonial added successfully!');
+        } catch (error) {
+            console.error('Error adding testimonial:', error);
+            alert('Failed to add testimonial');
+        }
+    };
+
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center">
                 <h1 className="text-2xl font-bold text-gray-900">Testimonials</h1>
-                <div className="flex space-x-2">
-                    {['pending', 'approved', 'rejected', 'all'].map((f) => (
-                        <button
-                            key={f}
-                            onClick={() => setFilter(f)}
-                            className={`px-4 py-2 rounded-md text-sm font-medium capitalize ${filter === f
-                                ? 'bg-indigo-600 text-white'
-                                : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
-                                }`}
-                        >
-                            {f}
-                        </button>
-                    ))}
+                <div className="flex items-center gap-4">
+                    <div className="flex space-x-2">
+                        {['pending', 'approved', 'rejected', 'all'].map((f) => (
+                            <button
+                                key={f}
+                                onClick={() => setFilter(f)}
+                                className={`px-4 py-2 rounded-md text-sm font-medium capitalize ${filter === f
+                                    ? 'bg-indigo-600 text-white'
+                                    : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+                                    }`}
+                            >
+                                {f}
+                            </button>
+                        ))}
+                    </div>
+                    <button
+                        onClick={() => setShowAddModal(true)}
+                        className="flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+                    >
+                        <span className="mr-2">+</span> Add Testimony
+                    </button>
                 </div>
             </div>
 
@@ -211,6 +258,91 @@ export default function TestimonialsPage() {
                     ))
                 )}
             </div>
+
+            {/* Add Testimony Modal */}
+            {showAddModal && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
+                        <div className="flex justify-between items-center mb-4">
+                            <h2 className="text-xl font-bold text-gray-900">Add Testimony</h2>
+                            <button onClick={() => setShowAddModal(false)} className="text-gray-400 hover:text-gray-600">
+                                <X size={20} />
+                            </button>
+                        </div>
+                        <form onSubmit={handleAddTestimonial} className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+                                <input
+                                    type="text"
+                                    required
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
+                                    value={newTestimonial.full_name}
+                                    onChange={e => setNewTestimonial({ ...newTestimonial, full_name: e.target.value })}
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Church Branch (Optional)</label>
+                                <input
+                                    type="text"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
+                                    value={newTestimonial.church_branch}
+                                    onChange={e => setNewTestimonial({ ...newTestimonial, church_branch: e.target.value })}
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Testimony</label>
+                                <textarea
+                                    required
+                                    rows="4"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
+                                    value={newTestimonial.testimonial_text}
+                                    onChange={e => setNewTestimonial({ ...newTestimonial, testimonial_text: e.target.value })}
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Rating</label>
+                                <div className="flex gap-2">
+                                    {[1, 2, 3, 4, 5].map((star) => (
+                                        <button
+                                            key={star}
+                                            type="button"
+                                            onClick={() => setNewTestimonial({ ...newTestimonial, star_rating: star })}
+                                            className={`text-2xl ${star <= newTestimonial.star_rating ? 'text-yellow-400' : 'text-gray-300'}`}
+                                        >
+                                            ★
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Profile Photo URL (Optional)</label>
+                                <input
+                                    type="url"
+                                    placeholder="https://..."
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
+                                    value={newTestimonial.profile_photo_url}
+                                    onChange={e => setNewTestimonial({ ...newTestimonial, profile_photo_url: e.target.value })}
+                                />
+                            </div>
+                            <div className="flex justify-end gap-3 mt-6">
+                                <button
+                                    type="button"
+                                    onClick={() => setShowAddModal(false)}
+                                    className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+                                >
+                                    Add Testimony
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

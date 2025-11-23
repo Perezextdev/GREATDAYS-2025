@@ -115,7 +115,7 @@ const Hero = () => {
                     </motion.div>
 
                     {/* Main Title */}
-                    <h1 className="text-6xl md:text-8xl lg:text-9xl font-black mb-6 tracking-tighter leading-tight text-white drop-shadow-2xl">
+                    <h1 className="text-5xl sm:text-6xl md:text-8xl lg:text-9xl font-black mb-8 tracking-tighter leading-tight text-white drop-shadow-2xl mt-8">
                         GREAT{' '}
                         <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 relative inline-block">
                             DAYS
@@ -144,7 +144,7 @@ const Hero = () => {
                     </h1>
 
                     {/* Subtitle */}
-                    <p className="text-xl md:text-3xl text-slate-200 mb-12 max-w-3xl mx-auto leading-relaxed font-light">
+                    <p className="text-lg sm:text-xl md:text-3xl text-slate-200 mb-10 md:mb-16 max-w-3xl mx-auto leading-relaxed font-light px-4">
                         Experience a week of{' '}
                         <span className="font-semibold text-blue-300">divine encounter</span>,{' '}
                         <span className="font-semibold text-purple-300">transformation</span>, and{' '}
@@ -152,41 +152,51 @@ const Hero = () => {
                     </p>
 
                     {/* Event Info */}
-                    <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-12">
-                        <div className="flex items-center gap-3 text-white bg-white/10 px-6 py-3 rounded-full border border-white/20 backdrop-blur-md shadow-xl">
-                            <Calendar className="w-5 h-5 text-blue-300" />
-                            <span className="font-medium">January 18th - 25th, 2026</span>
+                    <div className="flex flex-col gap-4 mb-10 md:mb-16 px-4 max-w-md mx-auto">
+                        <div className="flex items-center gap-4 text-white bg-white/10 px-6 py-4 rounded-2xl border border-white/20 backdrop-blur-md shadow-xl w-full justify-start">
+                            <div className="p-2 bg-blue-500/20 rounded-full">
+                                <Calendar className="w-6 h-6 text-blue-300" />
+                            </div>
+                            <div className="text-left">
+                                <p className="text-xs text-blue-200 uppercase tracking-wider font-semibold">Date</p>
+                                <p className="font-medium text-lg">Jan 18th - 25th, 2026</p>
+                            </div>
                         </div>
-                        <div className="flex items-center gap-3 text-white bg-white/10 px-6 py-3 rounded-full border border-white/20 backdrop-blur-md shadow-xl">
-                            <MapPin className="w-5 h-5 text-purple-300" />
-                            <span className="font-medium">The Model Church, Zaria</span>
+                        <div className="flex items-center gap-4 text-white bg-white/10 px-6 py-4 rounded-2xl border border-white/20 backdrop-blur-md shadow-xl w-full justify-start">
+                            <div className="p-2 bg-purple-500/20 rounded-full">
+                                <MapPin className="w-6 h-6 text-purple-300" />
+                            </div>
+                            <div className="text-left">
+                                <p className="text-xs text-purple-200 uppercase tracking-wider font-semibold">Location</p>
+                                <p className="font-medium text-lg">The Model Church, Zaria</p>
+                            </div>
                         </div>
                     </div>
 
                     {/* CTA Buttons */}
-                    <div className="flex flex-col sm:flex-row items-center justify-center gap-5">
-                        <Link to="/register">
+                    <div className="flex flex-col gap-5 px-6 max-w-md mx-auto pb-12">
+                        <Link to="/register" className="w-full">
                             <motion.button
-                                whileHover={{ scale: 1.05, boxShadow: '0 20px 60px rgba(59, 130, 246, 0.5)' }}
-                                whileTap={{ scale: 0.95 }}
-                                className="group relative px-10 py-5 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full text-white font-bold text-lg overflow-hidden shadow-2xl"
+                                whileHover={{ scale: 1.02 }}
+                                whileTap={{ scale: 0.98 }}
+                                className="group relative w-full px-8 py-5 bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl text-white font-bold text-xl overflow-hidden shadow-2xl"
                             >
-                                <span className="relative z-10 flex items-center gap-2">
+                                <span className="relative z-10 flex items-center justify-center gap-3">
                                     Register Now{' '}
-                                    <ArrowRight className="w-5 h-5 group-hover:translate-x-2 transition-transform duration-300" />
+                                    <ArrowRight className="w-6 h-6 group-hover:translate-x-2 transition-transform duration-300" />
                                 </span>
-                                <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                             </motion.button>
                         </Link>
 
                         <a
                             href="/flyer.jpg"
                             download="GreatDays2026_Flyer.jpg"
+                            className="w-full"
                         >
                             <motion.button
-                                whileHover={{ scale: 1.05, backgroundColor: 'rgba(255,255,255,0.15)' }}
-                                whileTap={{ scale: 0.95 }}
-                                className="px-10 py-5 bg-white/10 border-2 border-white/30 text-white rounded-full font-bold text-lg flex items-center gap-3 hover:border-white/50 transition-all backdrop-blur-md shadow-xl"
+                                whileHover={{ scale: 1.02, backgroundColor: 'rgba(255,255,255,0.15)' }}
+                                whileTap={{ scale: 0.98 }}
+                                className="w-full px-8 py-4 bg-white/5 border border-white/20 text-white rounded-2xl font-semibold text-lg flex items-center justify-center gap-3 hover:bg-white/10 transition-all backdrop-blur-md"
                             >
                                 <Download className="w-5 h-5" />
                                 Download Flyer

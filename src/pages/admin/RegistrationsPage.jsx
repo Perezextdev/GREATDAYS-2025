@@ -401,7 +401,17 @@ export default function RegistrationsPage() {
                                             <div className="flex items-center">
                                                 <div className="h-10 w-10 flex-shrink-0">
                                                     {reg.profile_photo_url ? (
-                                                        <img className="h-10 w-10 rounded-full object-cover" src={reg.profile_photo_url} alt="" />
+                                                        <img
+                                                            className="h-10 w-10 rounded-full object-cover"
+                                                            src={reg.profile_photo_url.startsWith('http')
+                                                                ? reg.profile_photo_url
+                                                                : `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/profile-photos/${reg.profile_photo_url}`}
+                                                            alt=""
+                                                            onError={(e) => {
+                                                                e.target.onerror = null;
+                                                                e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(reg.full_name)}&background=random`;
+                                                            }}
+                                                        />
                                                     ) : (
                                                         <div className="h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold">
                                                             {reg.full_name.charAt(0)}
