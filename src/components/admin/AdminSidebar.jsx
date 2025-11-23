@@ -55,7 +55,8 @@ import {
     ChevronLeft,
     ChevronRight,
     ChevronDown,
-    ChevronUp
+    ChevronUp,
+    Trophy
 } from 'lucide-react';
 
 const menuItems = [
@@ -75,6 +76,7 @@ const menuItems = [
             { name: 'Onsite Participants', path: '/admin/registrations?mode=onsite', icon: MapPin },
             { name: 'Accommodation', path: '/admin/accommodation', icon: Home },
             { name: 'Arrivals Calendar', path: '/admin/arrivals', icon: Calendar },
+            { name: 'Early Birds', path: '/admin/early-birds', icon: Trophy },
             { name: 'Pending', path: '/admin/registrations?status=pending', icon: Clock },
         ]
     },

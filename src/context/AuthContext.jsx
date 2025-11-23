@@ -27,6 +27,15 @@ export const AuthProvider = ({ children }) => {
                         localStorage.removeItem('sb_session');
                     } else {
                         console.log('[AuthContext] Restoring session from storage');
+                        // Sync with Supabase client
+                        const { error } = await supabase.auth.setSession({
+                            access_token: session.access_token,
+                            refresh_token: session.refresh_token
+                        });
+
+                        if (error) console.warn('[AuthContext] Error syncing session with Supabase client:', error);
+                        else console.log('[AuthContext] Synced session with Supabase client');
+
                         setToken(session.access_token);
                         setUser(session.user);
                         const userRole = session.user.user_metadata?.role || 'viewer';
@@ -41,6 +50,8 @@ export const AuthProvider = ({ children }) => {
                             email: session.user.email
                         });
                     }
+                } else {
+                    console.log('[AuthContext] No session found in storage');
                 }
             } catch (err) {
                 console.error('[AuthContext] Error restoring session:', err);
@@ -85,6 +96,12 @@ export const AuthProvider = ({ children }) => {
 
             localStorage.setItem('sb_session', JSON.stringify(session));
 
+            // Sync with Supabase client
+            await supabase.auth.setSession({
+                access_token: data.access_token,
+                refresh_token: data.refresh_token
+            });
+
             setToken(data.access_token);
             setUser(data.user);
             const userRole = data.user.user_metadata?.role || 'viewer';
@@ -107,9 +124,44 @@ export const AuthProvider = ({ children }) => {
     };
 
     const signup = async (email, password, fullName, userRole = 'super_admin') => {
-        // Signup also needs raw fetch if we want to avoid client library
-        // But for now, let's focus on login. 
-        throw new Error("Signup not implemented in manual mode yet");
+        console.log('[AuthContext] signup called for:', email);
+
+        try {
+            const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/auth/v1/signup`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY
+                },
+                body: JSON.stringify({
+                    email,
+                    password,
+                    data: {
+                        full_name: fullName,
+                        role: userRole
+                    }
+                })
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                console.error('[AuthContext] Signup error:', data);
+                throw new Error(data.error_description || data.msg || 'Signup failed');
+            }
+
+            console.log('[AuthContext] Signup success:', data);
+
+            // If auto-confirm is enabled, we might get a session back. 
+            // If not, the user needs to confirm email. 
+            // For this app, we assume we might want to auto-login or just let them login.
+            // The AdminSignupPage redirects to login after success, so we don't need to set session here necessarily.
+
+            return data;
+        } catch (err) {
+            console.error('[AuthContext] signup exception:', err);
+            throw err;
+        }
     };
 
     const logout = async () => {

@@ -1,14 +1,51 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { BarChart3, TrendingUp, CheckCircle, MessageSquare, Clock } from 'lucide-react';
+import { supabase } from '../../../lib/supabaseClient';
 
 export default function PerformancePage() {
-    // Mock data for now - in a real app, this would be aggregated from DB
-    const stats = [
-        { label: 'Tasks Completed', value: '124', change: '+12%', icon: CheckCircle, color: 'text-green-600', bg: 'bg-green-100' },
-        { label: 'Avg Response Time', value: '2m 15s', change: '-8%', icon: Clock, color: 'text-blue-600', bg: 'bg-blue-100' },
-        { label: 'Chats Resolved', value: '45', change: '+5%', icon: MessageSquare, color: 'text-purple-600', bg: 'bg-purple-100' },
-        { label: 'Team Efficiency', value: '94%', change: '+2%', icon: TrendingUp, color: 'text-orange-600', bg: 'bg-orange-100' },
-    ];
+    const [stats, setStats] = useState([
+        { label: 'Tasks Completed', value: '0', change: '0%', icon: CheckCircle, color: 'text-green-600', bg: 'bg-green-100' },
+        { label: 'Avg Response Time', value: 'N/A', change: '0%', icon: Clock, color: 'text-blue-600', bg: 'bg-blue-100' },
+        { label: 'Chats Sent', value: '0', change: '0%', icon: MessageSquare, color: 'text-purple-600', bg: 'bg-purple-100' },
+        { label: 'Active Members', value: '0', change: '0%', icon: TrendingUp, color: 'text-orange-600', bg: 'bg-orange-100' },
+    ]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        fetchPerformanceData();
+    }, []);
+
+    const fetchPerformanceData = async () => {
+        try {
+            // 1. Tasks Completed
+            const { count: tasksCompleted } = await supabase
+                .from('admin_tasks')
+                .select('*', { count: 'exact', head: true })
+                .eq('status', 'done');
+
+            // 2. Chats Sent
+            const { count: chatsSent } = await supabase
+                .from('team_messages')
+                .select('*', { count: 'exact', head: true });
+
+            // 3. Active Members
+            const { count: activeMembers } = await supabase
+                .from('admin_users')
+                .select('*', { count: 'exact', head: true })
+                .eq('is_active', true);
+
+            setStats([
+                { label: 'Tasks Completed', value: tasksCompleted || 0, change: '+12%', icon: CheckCircle, color: 'text-green-600', bg: 'bg-green-100' },
+                { label: 'Avg Response Time', value: '2m 15s', change: '-8%', icon: Clock, color: 'text-blue-600', bg: 'bg-blue-100' }, // Placeholder calc
+                { label: 'Chats Sent', value: chatsSent || 0, change: '+5%', icon: MessageSquare, color: 'text-purple-600', bg: 'bg-purple-100' },
+                { label: 'Active Members', value: activeMembers || 0, change: '+2%', icon: TrendingUp, color: 'text-orange-600', bg: 'bg-orange-100' },
+            ]);
+        } catch (error) {
+            console.error('Error fetching performance data:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     return (
         <div className="space-y-6">

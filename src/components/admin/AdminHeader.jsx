@@ -16,9 +16,11 @@ import {
     Upload
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { useNotifications } from '../../hooks/useNotifications';
 
 export default function AdminHeader({ onMenuClick, onSearchClick }) {
     const { adminProfile, logout } = useAuth();
+    const { notifications, unreadCount, markAllAsRead } = useNotifications();
     const [userMenuOpen, setUserMenuOpen] = useState(false);
     const [quickAddOpen, setQuickAddOpen] = useState(false);
     const [notificationsOpen, setNotificationsOpen] = useState(false);
@@ -96,41 +98,48 @@ export default function AdminHeader({ onMenuClick, onSearchClick }) {
                         className="p-2 rounded-full text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none relative"
                     >
                         <Bell size={20} />
-                        <span className="absolute top-2 right-2 block h-2 w-2 rounded-full bg-red-500 ring-2 ring-white" />
+                        {unreadCount > 0 && (
+                            <span className="absolute top-2 right-2 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-xs text-white font-bold">
+                                {unreadCount > 9 ? '9+' : unreadCount}
+                            </span>
+                        )}
                     </button>
 
                     {notificationsOpen && (
                         <div className="absolute right-0 mt-2 w-80 bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5 py-1 z-50">
                             <div className="px-4 py-3 border-b border-gray-100 flex justify-between items-center">
                                 <h3 className="text-sm font-semibold text-gray-900">Notifications</h3>
-                                <button className="text-xs text-indigo-600 hover:text-indigo-800">Mark all read</button>
+                                <button
+                                    onClick={markAllAsRead}
+                                    className="text-xs text-indigo-600 hover:text-indigo-800"
+                                >
+                                    Mark all read
+                                </button>
                             </div>
                             <div className="max-h-96 overflow-y-auto">
-                                {/* Mock Notifications */}
-                                <div className="px-4 py-3 hover:bg-gray-50 border-b border-gray-50 cursor-pointer">
-                                    <div className="flex items-start">
-                                        <div className="flex-shrink-0 pt-0.5">
-                                            <div className="h-2 w-2 rounded-full bg-blue-500 mt-1.5"></div>
-                                        </div>
-                                        <div className="ml-3 w-0 flex-1">
-                                            <p className="text-sm font-medium text-gray-900">New Registration</p>
-                                            <p className="text-xs text-gray-500 mt-0.5">John Doe registered for the event.</p>
-                                            <p className="text-xs text-gray-400 mt-1">5 mins ago</p>
-                                        </div>
+                                {notifications.length === 0 ? (
+                                    <div className="px-4 py-8 text-center text-gray-500 text-sm">
+                                        No notifications yet
                                     </div>
-                                </div>
-                                <div className="px-4 py-3 hover:bg-gray-50 border-b border-gray-50 cursor-pointer">
-                                    <div className="flex items-start">
-                                        <div className="flex-shrink-0 pt-0.5">
-                                            <div className="h-2 w-2 rounded-full bg-red-500 mt-1.5"></div>
+                                ) : (
+                                    notifications.map(notification => (
+                                        <div
+                                            key={notification.id}
+                                            className="px-4 py-3 hover:bg-gray-50 border-b border-gray-50 cursor-pointer"
+                                        >
+                                            <div className="flex items-start">
+                                                <div className="flex-shrink-0 pt-0.5">
+                                                    <div className={`h-2 w-2 rounded-full mt-1.5 bg-${notification.color}-500`}></div>
+                                                </div>
+                                                <div className="ml-3 w-0 flex-1">
+                                                    <p className="text-sm font-medium text-gray-900">{notification.title}</p>
+                                                    <p className="text-xs text-gray-500 mt-0.5">{notification.message}</p>
+                                                    <p className="text-xs text-gray-400 mt-1">{notification.time}</p>
+                                                </div>
+                                            </div>
                                         </div>
-                                        <div className="ml-3 w-0 flex-1">
-                                            <p className="text-sm font-medium text-gray-900">Support Request</p>
-                                            <p className="text-xs text-gray-500 mt-0.5">Urgent: Cannot access account.</p>
-                                            <p className="text-xs text-gray-400 mt-1">1 hour ago</p>
-                                        </div>
-                                    </div>
-                                </div>
+                                    ))
+                                )}
                             </div>
                             <div className="px-4 py-2 border-t border-gray-100 bg-gray-50 text-center">
                                 <Link to="/admin/notifications" className="text-xs font-medium text-indigo-600 hover:text-indigo-800">

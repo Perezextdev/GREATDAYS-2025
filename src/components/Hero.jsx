@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Calendar, MapPin, Play, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ArrowRight, Calendar, MapPin, Play, ChevronLeft, ChevronRight, Download } from 'lucide-react';
 
 // Import gallery images
 import gallery1 from '../assets/gallery-1.jpg';
@@ -70,8 +70,8 @@ const Hero = () => {
                             key={index}
                             onClick={() => setCurrentSlide(index)}
                             className={`h-2 rounded-full transition-all duration-300 ${index === currentSlide
-                                    ? 'w-8 bg-white'
-                                    : 'w-2 bg-white/50 hover:bg-white/75'
+                                ? 'w-8 bg-white'
+                                : 'w-2 bg-white/50 hover:bg-white/75'
                                 }`}
                             aria-label={`Go to slide ${index + 1}`}
                         />
@@ -155,7 +155,7 @@ const Hero = () => {
                     <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-12">
                         <div className="flex items-center gap-3 text-white bg-white/10 px-6 py-3 rounded-full border border-white/20 backdrop-blur-md shadow-xl">
                             <Calendar className="w-5 h-5 text-blue-300" />
-                            <span className="font-medium">April 14th - 20th, 2025</span>
+                            <span className="font-medium">January 18th - 25th, 2026</span>
                         </div>
                         <div className="flex items-center gap-3 text-white bg-white/10 px-6 py-3 rounded-full border border-white/20 backdrop-blur-md shadow-xl">
                             <MapPin className="w-5 h-5 text-purple-300" />
@@ -180,17 +180,16 @@ const Hero = () => {
                         </Link>
 
                         <a
-                            href="https://www.youtube.com/@fdimjal"
-                            target="_blank"
-                            rel="noopener noreferrer"
+                            href="/flyer.jpg"
+                            download="GreatDays2026_Flyer.jpg"
                         >
                             <motion.button
                                 whileHover={{ scale: 1.05, backgroundColor: 'rgba(255,255,255,0.15)' }}
                                 whileTap={{ scale: 0.95 }}
                                 className="px-10 py-5 bg-white/10 border-2 border-white/30 text-white rounded-full font-bold text-lg flex items-center gap-3 hover:border-white/50 transition-all backdrop-blur-md shadow-xl"
                             >
-                                <Play className="w-5 h-5" />
-                                Watch Trailer
+                                <Download className="w-5 h-5" />
+                                Download Flyer
                             </motion.button>
                         </a>
                     </div>

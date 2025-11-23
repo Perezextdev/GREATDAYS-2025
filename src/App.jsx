@@ -37,6 +37,7 @@ import CheckInPage from './pages/admin/CheckInPage';
 import QuickActionsPage from './pages/admin/QuickActionsPage';
 import EventOverviewPage from './pages/admin/EventOverviewPage';
 import AnnouncementsPage from './pages/admin/AnnouncementsPage';
+import EarlyBirdsPage from './pages/admin/EarlyBirdsPage';
 
 import AdminUsersPage from './pages/admin/team/AdminUsersPage';
 import MyTasksPage from './pages/admin/team/MyTasksPage';
@@ -120,10 +121,11 @@ function App() {
 
               {/* Registrations */}
               <Route path="registrations" element={<RegistrationsPage />} />
-              <Route path="registrations/new" element={<NewRegistrationPage />} />
-              <Route path="accommodation" element={<AccommodationPage />} />
               <Route path="arrivals" element={<ArrivalsPage />} />
-              <Route path="meals" element={<MealsPage />} />
+              <Route path="accommodation" element={<AccommodationPage />} />
+              <Route path="medals" element={<MealsPage />} />
+              <Route path="early-birds" element={<EarlyBirdsPage />} />
+              <Route path="testimonials" element={<TestimonialsPage />} />
 
               {/* Communication */}
               <Route path="emails" element={<EmailsPage />} />
