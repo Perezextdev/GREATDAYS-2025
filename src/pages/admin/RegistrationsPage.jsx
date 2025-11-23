@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '../../lib/supabaseClient';
 import {
     Search,
@@ -21,10 +21,12 @@ import EditRegistrationModal from '../../components/admin/EditRegistrationModal'
 import RegistrationDetailModal from '../../components/admin/RegistrationDetailModal';
 import BulkActions from '../../components/admin/BulkActions';
 import { useAuth } from '../../context/AuthContext';
+import SkeletonLoader from '../../components/SkeletonLoader';
 
 export default function RegistrationsPage() {
     const navigate = useNavigate();
-    const { hasPermission } = useAuth();
+    const location = useLocation();
+    const { hasPermission, token } = useAuth();
     const [registrations, setRegistrations] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
@@ -48,19 +50,53 @@ export default function RegistrationsPage() {
         outsideZaria: 0
     });
 
+    // Auto-apply filters from URL query parameters
+    useEffect(() => {
+        const searchParams = new URLSearchParams(location.search);
+        const mode = searchParams.get('mode');
+        const status = searchParams.get('status');
+
+        if (mode) {
+            // Capitalize first letter to match filter values
+            const capitalizedMode = mode.charAt(0).toUpperCase() + mode.slice(1);
+            setFilters(prev => ({ ...prev, mode: capitalizedMode }));
+        }
+        if (status) {
+            const capitalizedStatus = status.charAt(0).toUpperCase() + status.slice(1);
+            setFilters(prev => ({ ...prev, status: capitalizedStatus }));
+        }
+    }, [location.search]);
+
     useEffect(() => {
         fetchRegistrations();
-    }, []);
+    }, [token]);
 
     const fetchRegistrations = async () => {
+        if (!token) {
+            console.log('[RegistrationsPage] Waiting for token...');
+            return;
+        }
+
         try {
             setLoading(true);
-            const { data, error } = await supabase
-                .from('registrations')
-                .select('*')
-                .order('created_at', { ascending: false });
+            console.log('[RegistrationsPage] Fetching with token...');
 
-            if (error) throw error;
+            const response = await fetch(
+                `${import.meta.env.VITE_SUPABASE_URL}/rest/v1/registrations?select=*&order=created_at.desc`,
+                {
+                    headers: {
+                        'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
+                        'Authorization': `Bearer ${token}`
+                    }
+                }
+            );
+
+            if (!response.ok) {
+                throw new Error(`Failed to fetch: ${response.status}`);
+            }
+
+            const data = await response.json();
+            console.log('[RegistrationsPage] Fetched registrations:', data.length);
             setRegistrations(data);
             calculateAnalytics(data);
         } catch (error) {
@@ -85,17 +121,30 @@ export default function RegistrationsPage() {
             return;
         }
 
-        try {
-            const { error } = await supabase
-                .from('registrations')
-                .delete()
-                .in('id', ids);
+        if (!token) {
+            alert('Authentication required');
+            return;
+        }
 
-            if (error) throw error;
+        try {
+            const response = await fetch(
+                `${import.meta.env.VITE_SUPABASE_URL}/rest/v1/registrations?id=in.(${ids.join(',')})`,
+                {
+                    method: 'DELETE',
+                    headers: {
+                        'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
+                        'Authorization': `Bearer ${token}`
+                    }
+                }
+            );
+
+            if (!response.ok) {
+                throw new Error(`Failed to delete: ${response.status}`);
+            }
 
             setRegistrations(prev => prev.filter(r => !ids.includes(r.id)));
             setSelectedRows([]);
-            calculateAnalytics(registrations.filter(r => !ids.includes(r.id))); // Recalculate locally
+            calculateAnalytics(registrations.filter(r => !ids.includes(r.id)));
             alert('Registration(s) deleted successfully.');
         } catch (error) {
             console.error('Error deleting registrations:', error);
@@ -324,9 +373,10 @@ export default function RegistrationsPage() {
                         <tbody className="bg-white divide-y divide-gray-200">
                             {loading ? (
                                 <tr>
-                                    <td colSpan="7" className="px-6 py-10 text-center">
-                                        <div className="flex justify-center">
-                                            <div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-600 border-t-transparent"></div>
+                                    <td colSpan="7" className="px-6 py-10">
+                                        <div className="space-y-4">
+                                            <SkeletonLoader />
+                                            <SkeletonLoader variant="table" />
                                         </div>
                                     </td>
                                 </tr>

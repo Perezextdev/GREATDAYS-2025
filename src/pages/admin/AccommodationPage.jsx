@@ -1,8 +1,11 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '../../lib/supabaseClient';
-import { Home, Users, AlertCircle, CheckCircle, Search, Filter } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
+import { Home, Users, AlertCircle, CheckCircle, Search, Filter, Download } from 'lucide-react';
+import { exportToExcel } from '../../utils/excelExport';
+import SkeletonLoader from '../../components/SkeletonLoader';
 
 export default function AccommodationPage() {
+    const { token } = useAuth();
     const [requests, setRequests] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
@@ -13,19 +16,34 @@ export default function AccommodationPage() {
 
     useEffect(() => {
         fetchRequests();
-    }, []);
+    }, [token]);
 
     const fetchRequests = async () => {
+        if (!token) {
+            console.log('[AccommodationPage] Waiting for token...');
+            return;
+        }
+
         try {
             setLoading(true);
-            const { data, error } = await supabase
-                .from('registrations')
-                .select('*')
-                .not('accommodation_type', 'is', null)
-                .neq('accommodation_type', 'None')
-                .order('created_at', { ascending: false });
+            console.log('[AccommodationPage] Fetching with token...');
 
-            if (error) throw error;
+            const response = await fetch(
+                `${import.meta.env.VITE_SUPABASE_URL}/rest/v1/registrations?select=*&needs_accommodation=eq.true&order=created_at.desc`,
+                {
+                    headers: {
+                        'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
+                        'Authorization': `Bearer ${token}`
+                    }
+                }
+            );
+
+            if (!response.ok) {
+                throw new Error(`Failed to fetch: ${response.status}`);
+            }
+
+            const data = await response.json();
+            console.log('[AccommodationPage] Fetched accommodation requests:', data.length);
             setRequests(data);
         } catch (error) {
             console.error('Error fetching accommodation requests:', error);
@@ -42,6 +60,19 @@ export default function AccommodationPage() {
         if (filterType === 'all') return true;
         return reg.accommodation_type === filterType;
     });
+
+    const handleExport = () => {
+        const dataToExport = filteredRequests.map(reg => ({
+            'Full Name': reg.full_name,
+            'Phone': reg.phone_number,
+            'Email': reg.email,
+            'Accommodation Type': reg.accommodation_type,
+            'Arrival Date': reg.arrival_date,
+            'Departure Date': reg.departure_date,
+            'Location': reg.location_type
+        }));
+        exportToExcel(dataToExport, 'GreatDays_Accommodation');
+    };
 
     const occupancy = requests.length;
     const occupancyRate = (occupancy / TOTAL_CAPACITY) * 100;
@@ -62,15 +93,24 @@ export default function AccommodationPage() {
         <div className="space-y-6">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <h1 className="text-2xl font-bold text-gray-900">Accommodation</h1>
-                <div className="bg-white px-4 py-2 rounded-lg border border-gray-200 shadow-sm flex items-center gap-3">
-                    <Home size={20} className="text-gray-500" />
-                    <div>
-                        <p className="text-xs text-gray-500 uppercase font-semibold">Occupancy</p>
-                        <div className="flex items-baseline gap-1">
-                            <span className={`text-lg font-bold ${getOccupancyColor()}`}>{occupancy}</span>
-                            <span className="text-sm text-gray-400">/ {TOTAL_CAPACITY}</span>
+                <div className="flex gap-3">
+                    <div className="bg-white px-4 py-2 rounded-lg border border-gray-200 shadow-sm flex items-center gap-3">
+                        <Home size={20} className="text-gray-500" />
+                        <div>
+                            <p className="text-xs text-gray-500 uppercase font-semibold">Occupancy</p>
+                            <div className="flex items-baseline gap-1">
+                                <span className={`text-lg font-bold ${getOccupancyColor()}`}>{occupancy}</span>
+                                <span className="text-sm text-gray-400">/ {TOTAL_CAPACITY}</span>
+                            </div>
                         </div>
                     </div>
+                    <button
+                        onClick={handleExport}
+                        className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                    >
+                        <Download size={18} className="mr-2" />
+                        Export Excel
+                    </button>
                 </div>
             </div>
 
@@ -117,8 +157,11 @@ export default function AccommodationPage() {
             {/* List */}
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
                 {loading ? (
-                    <div className="p-10 flex justify-center">
-                        <div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-600 border-t-transparent"></div>
+                    <div className="p-6">
+                        <SkeletonLoader />
+                        <div className="mt-4">
+                            <SkeletonLoader variant="table" />
+                        </div>
                     </div>
                 ) : filteredRequests.length === 0 ? (
                     <div className="p-10 text-center text-gray-500">

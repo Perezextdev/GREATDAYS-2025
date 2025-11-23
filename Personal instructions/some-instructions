@@ -1,0 +1,741 @@
+🎯 ADMIN PANEL LAYOUT & NAVIGATION
+
+📱 OVERALL LAYOUT STRUCTURE
+┌─────────────────────────────────────────────────────────────┐
+│  TOP NAVIGATION BAR (Fixed)                                 │
+├─────────────────────────────────────────────────────────────┤
+│ ┌────────┐ ┌──────────────────────────────┐ ┌────────────┐│
+│ │Sidebar │ │                              │ │   Content  ││
+│ │        │ │     Main Content Area        │ │            ││
+│ │  Menu  │ │                              │ │            ││
+│ │        │ │                              │ │            ││
+│ └────────┘ └──────────────────────────────┘ └────────────┘│
+└─────────────────────────────────────────────────────────────┘
+
+🔝 TOP NAVIGATION BAR
+Left Section
+┌──────────────────────────────────────────┐
+│ [☰] GREAT DAYS Admin    [Search Icon]    │
+└──────────────────────────────────────────┘
+Components:
+
+Hamburger Menu Icon (☰)
+
+Click to toggle sidebar collapse/expand
+Mobile: Opens sidebar as overlay
+Desktop: Collapses to icon-only sidebar
+
+
+Logo/Brand Text: "GREAT DAYS Admin"
+
+Click: Returns to /admin/dashboard
+Displays event year: "GREAT DAYS 2025"
+
+
+Universal Search Bar (Ctrl+K)
+
+Prominent search icon (🔍)
+Placeholder: "Search anything... (Ctrl+K)"
+Click or press Ctrl+K to open command palette
+Width: 400px desktop, full-width mobile
+
+
+
+Right Section
+┌────────────────────────────────────────────────┐
+│ [+] [🔔] [Event: Live/Upcoming] [👤 Admin ▾]  │
+└────────────────────────────────────────────────┘
+Components:
+
+Quick Add Button [+]
+
+Icon: Plus in circle
+Color: Blue/Primary
+Opens dropdown menu:
+
+
+
+     ┌─────────────────────────┐
+     │ + New Registration       │
+     │ + Bulk Import (CSV)      │
+     │ + Manual Check-in        │
+     │ + Create Support Ticket  │
+     │ + Add Testimony          │
+     └─────────────────────────┘
+
+Notifications Bell [🔔]
+
+Shows red badge with count if unread
+Click: Opens notification dropdown
+Notification types:
+
+New registrations (blue dot)
+Pending support requests (red dot)
+System alerts (yellow dot)
+Testimonials to review (purple dot)
+
+
+Dropdown shows last 5, "View All" link
+Mark as read individually or all
+
+
+Event Status Indicator
+
+Badge showing current status:
+
+🟢 "Event Live" (during event dates)
+🟡 "Upcoming" (before event)
+⚪ "Completed" (after event)
+
+
+Click: Shows event countdown/details
+
+
+Admin Profile Dropdown [👤 Admin Name ▾]
+
+Shows admin name and role
+Small profile photo (if uploaded)
+Dropdown menu:
+
+
+
+     ┌──────────────────────────────┐
+     │ John Doe                     │
+     │ Super Admin                  │
+     ├──────────────────────────────┤
+     │ 👤 My Profile                │
+     │ ⚙️  Settings                 │
+     │ 🎨 Customize Dashboard       │
+     │ 🔔 Notification Preferences  │
+     │ 🌐 View Public Site          │
+     │ 📚 Help & Support            │
+     │ ⌨️  Keyboard Shortcuts       │
+     ├──────────────────────────────┤
+     │ 🚪 Logout                    │
+     └──────────────────────────────┘
+
+📂 SIDEBAR NAVIGATION (Collapsible)
+Desktop View (Expanded)
+Width: 260px
+Can collapse to icon-only (60px)
+Mobile View
+Overlay sidebar (slides in from left)
+Full height, 80% width
+
+📋 SIDEBAR MENU STRUCTURE
+SECTION 1: OVERVIEW
+┌─────────────────────────────────┐
+│ 📊 Dashboard                    │  ← Active (highlighted)
+│ 📈 Analytics & Insights         │
+│ 🎯 Quick Actions                │
+└─────────────────────────────────┘
+1. Dashboard /admin/dashboard
+
+Icon: 📊 BarChart (lucide-react: BarChart3)
+Shows overview metrics
+Always first in list
+Keyboard shortcut: Ctrl+D
+
+2. Analytics & Insights /admin/analytics
+
+Icon: 📈 TrendingUp (lucide-react: TrendingUp)
+Advanced analytics and reports
+Predictive insights
+
+3. Quick Actions /admin/quick-actions
+
+Icon: 🎯 Zap (lucide-react: Zap)
+Frequently used actions in one place
+Keyboard shortcut: Ctrl+Q
+
+
+SECTION 2: REGISTRATIONS
+┌─────────────────────────────────┐
+│ REGISTRATIONS                   │
+├─────────────────────────────────┤
+│ 👥 All Registrations      [245] │
+│ 🌐 Online Participants    [103] │
+│ 📍 Onsite Participants    [142] │
+│ 🏠 Accommodation Requests  [87] │
+│ 📅 Arrivals Calendar       [5]  │
+│ ⏳ Pending/Incomplete       [3] │
+└─────────────────────────────────┘
+Section Header: "REGISTRATIONS" (uppercase, gray, small text)
+1. All Registrations /admin/registrations
+
+Icon: 👥 Users (lucide-react: Users)
+Badge showing total count
+Click: Full registrations table
+Keyboard shortcut: Ctrl+1
+
+2. Online Participants /admin/registrations?mode=online
+
+Icon: 🌐 Monitor (lucide-react: Monitor)
+Badge showing online count
+Pre-filtered view
+
+3. Onsite Participants /admin/registrations?mode=onsite
+
+Icon: 📍 MapPin (lucide-react: MapPin)
+Badge showing onsite count
+Pre-filtered view
+
+4. Accommodation Requests /admin/accommodation
+
+Icon: 🏠 Home (lucide-react: Home)
+Badge showing count needing accommodation
+Capacity indicator color:
+
+Green: <70% full
+Yellow: 70-90% full
+Red: >90% full
+
+
+
+5. Arrivals Calendar /admin/arrivals
+
+Icon: 📅 Calendar (lucide-react: Calendar)
+Badge showing today's arrivals count
+Calendar view of daily arrivals
+
+6. Pending/Incomplete /admin/registrations?status=pending
+
+Icon: ⏳ Clock (lucide-react: Clock)
+Badge showing incomplete registrations
+Started but not submitted
+
+
+SECTION 3: COMMUNICATION
+┌─────────────────────────────────┐
+│ COMMUNICATION                   │
+├─────────────────────────────────┤
+│ 📧 Email Center                 │
+│ 📨 Bulk Email                   │
+│ 📬 Email Campaigns              │
+│ 📋 Email Templates              │
+│ 📊 Delivery Reports             │
+│ 💬 SMS Center                   │
+└─────────────────────────────────┘
+1. Email Center /admin/emails
+
+Icon: 📧 Mail (lucide-react: Mail)
+Main email management hub
+See all sent emails
+
+2. Bulk Email /admin/emails/bulk
+
+Icon: 📨 MailPlus (lucide-react: MailPlus)
+Send mass emails
+Segment selection (Online/Onsite)
+Keyboard shortcut: Ctrl+M
+
+3. Email Campaigns /admin/emails/campaigns
+
+Icon: 📬 Inbox (lucide-react: Inbox)
+View past campaigns
+Track delivery and open rates
+
+4. Email Templates /admin/emails/templates
+
+Icon: 📋 FileText (lucide-react: FileText)
+Manage email templates
+Create new templates
+
+5. Delivery Reports /admin/emails/reports
+
+Icon: 📊 BarChart (lucide-react: BarChart2)
+Email delivery analytics
+Failed deliveries tracking
+
+6. SMS Center /admin/sms
+
+Icon: 💬 MessageSquare (lucide-react: MessageSquare)
+Send SMS reminders (optional feature)
+
+
+SECTION 4: CONTENT MANAGEMENT
+┌─────────────────────────────────┐
+│ CONTENT                         │
+├─────────────────────────────────┤
+│ ⭐ Testimonials           [12]  │
+│ 🎫 Badge Management             │
+│ 🖼️  Media Library               │
+│ 📄 Documents                    │
+└─────────────────────────────────┘
+1. Testimonials /admin/testimonials
+
+Icon: ⭐ Star (lucide-react: Star)
+Badge showing pending count
+Sub-menu (expandable):
+
+  ⭐ Testimonials
+    ├─ Pending Review [12]
+    ├─ Approved
+    ├─ Rejected
+    └─ All Testimonials
+2. Badge Management /admin/badges
+
+Icon: 🎫 CreditCard (lucide-react: CreditCard)
+Generate and manage badges
+Bulk download options
+Keyboard shortcut: Ctrl+B
+
+3. Media Library /admin/media
+
+Icon: 🖼️ Image (lucide-react: Image)
+Profile photos
+Event photos
+Documents
+
+4. Documents /admin/documents
+
+Icon: 📄 FileText (lucide-react: File)
+Event flyer (PDF)
+Program schedule (PDF)
+Other documents
+
+
+SECTION 5: SUPPORT
+┌─────────────────────────────────┐
+│ SUPPORT                         │
+├─────────────────────────────────┤
+│ 💬 Support Inbox          [8]   │
+│ 🤖 Chatbot Conversations        │
+│ 📞 Contact Log                  │
+│ 📝 Help Articles                │
+└─────────────────────────────────┘
+1. Support Inbox /admin/support
+
+Icon: 💬 MessageCircle (lucide-react: MessageCircle)
+Badge showing pending count
+Red badge if any request >2 hours old
+Sub-menu:
+
+  💬 Support Inbox
+    ├─ 🔴 New [8]
+    ├─ 🟡 In Progress [5]
+    ├─ 🟢 Resolved
+    └─ All Requests
+2. Chatbot Conversations /admin/chatbot
+
+Icon: 🤖 Bot (lucide-react: Bot)
+View chatbot interactions
+Escalated conversations
+
+3. Contact Log /admin/contacts
+
+Icon: 📞 Phone (lucide-react: Phone)
+Call history (if phone integration)
+Email threads
+
+4. Help Articles /admin/help
+
+Icon: 📝 BookOpen (lucide-react: BookOpen)
+Admin knowledge base
+Training materials
+
+
+SECTION 6: REPORTS & ANALYTICS
+┌─────────────────────────────────┐
+│ REPORTS                         │
+├─────────────────────────────────┤
+│ 📊 All Reports                  │
+│ 📥 Registration Reports         │
+│ 🏠 Accommodation Reports        │
+│ 🍽️  Meal Planning               │
+│ 📇 Contact Lists                │
+│ 📈 Custom Reports               │
+│ 📅 Scheduled Reports            │
+└─────────────────────────────────┘
+1. All Reports /admin/reports
+
+Icon: 📊 BarChart3 (lucide-react: BarChart3)
+Reports hub
+Quick access to all reports
+
+2. Registration Reports /admin/reports/registrations
+
+Icon: 📥 Download (lucide-react: Download)
+Export registrations
+Various formats (Excel, CSV, PDF)
+
+3. Accommodation Reports /admin/reports/accommodation
+
+Icon: 🏠 Home (lucide-react: Building)
+Accommodation lists
+Daily arrival lists
+
+4. Meal Planning /admin/reports/meals
+
+Icon: 🍽️ UtensilsCrossed (lucide-react: UtensilsCrossed)
+Meal requirements
+Outside Zaria only
+Export for caterers
+
+5. Contact Lists /admin/reports/contacts
+
+Icon: 📇 UserCheck (lucide-react: UserCheck)
+Complete contact directory
+Emergency contact lists
+
+6. Custom Reports /admin/reports/custom
+
+Icon: 📈 TrendingUp (lucide-react: LineChart)
+Build custom reports
+Saved report templates
+
+7. Scheduled Reports /admin/reports/scheduled
+
+Icon: 📅 CalendarClock (lucide-react: CalendarClock)
+Auto-generated reports
+Email delivery settings
+
+
+SECTION 7: EVENT MANAGEMENT
+┌─────────────────────────────────┐
+│ EVENT                           │
+├─────────────────────────────────┤
+│ 🎪 Event Overview               │
+│ 📍 Check-In (Live Event)   [●]  │
+│ 📊 Session Tracking             │
+│ 🎯 Live Dashboard               │
+│ 📢 Announcements                │
+│ 🗓️  Schedule Management         │
+└─────────────────────────────────┘
+1. Event Overview /admin/event
+
+Icon: 🎪 Tent (lucide-react: Calendar)
+Event details and settings
+Countdown to event
+
+2. Check-In (Live Event) /admin/check-in
+
+Icon: 📍 MapPinCheck (lucide-react: ScanLine)
+Red live indicator [●] during event
+QR code scanner
+Manual check-in
+Only visible during event dates
+
+3. Session Tracking /admin/sessions
+
+Icon: 📊 Activity (lucide-react: Activity)
+Track session attendance
+Real-time headcounts
+
+4. Live Dashboard /admin/live
+
+Icon: 🎯 Radio (lucide-react: Radio)
+Real-time event monitoring
+Live metrics during event
+
+5. Announcements /admin/announcements
+
+Icon: 📢 Megaphone (lucide-react: Megaphone)
+Broadcast messages
+Emergency alerts
+
+6. Schedule Management /admin/schedule
+
+Icon: 🗓️ CalendarDays (lucide-react: CalendarDays)
+Event schedule/program
+Update sessions
+
+
+SECTION 8: TEAM & ADMIN
+┌─────────────────────────────────┐
+│ TEAM                            │
+├─────────────────────────────────┤
+│ 👥 Admin Users                  │
+│ 📋 My Tasks               [5]   │
+│ 💬 Team Chat                    │
+│ 📊 Performance                  │
+│ 🎯 Activity Log                 │
+└─────────────────────────────────┘
+1. Admin Users /admin/team/users
+
+Icon: 👥 UsersRound (lucide-react: UsersRound)
+Manage admin accounts
+Roles and permissions
+Super Admin only
+
+2. My Tasks /admin/tasks
+
+Icon: 📋 CheckSquare (lucide-react: CheckSquare)
+Badge showing pending tasks count
+Assigned tasks
+Create new tasks
+
+3. Team Chat /admin/chat
+
+Icon: 💬 MessageSquare (lucide-react: MessagesSquare)
+Internal messaging
+@mentions
+Group chats
+
+4. Performance /admin/performance
+
+Icon: 📊 TrendingUp (lucide-react: Award)
+Admin metrics
+Leaderboard
+Personal goals
+
+5. Activity Log /admin/activity
+
+Icon: 🎯 Activity (lucide-react: History)
+Recent admin actions
+Audit trail
+Team activity feed
+
+
+SECTION 9: SETTINGS & SYSTEM
+┌─────────────────────────────────┐
+│ SYSTEM                          │
+├─────────────────────────────────┤
+│ ⚙️  Settings                     │
+│ 🔐 Security                     │
+│ 🔄 Automations                  │
+│ 🔌 Integrations                 │
+│ 💾 Backup & Data                │
+│ 🐛 System Health                │
+└─────────────────────────────────┘
+1. Settings /admin/settings
+
+Icon: ⚙️ Settings (lucide-react: Settings)
+General settings
+Event configuration
+Email settings
+Badge templates
+
+2. Security /admin/security
+
+Icon: 🔐 Shield (lucide-react: Shield)
+2FA settings
+Session management
+Audit logs
+IP whitelist
+
+3. Automations /admin/automations
+
+Icon: 🔄 Repeat (lucide-react: Workflow)
+Automation rules
+If-then workflows
+Scheduled tasks
+
+4. Integrations /admin/integrations
+
+Icon: 🔌 Plug (lucide-react: Plug)
+Connected services
+API keys
+Webhooks
+
+5. Backup & Data /admin/backup
+
+Icon: 💾 Database (lucide-react: Database)
+Backup management
+Data export/import
+Restore options
+
+6. System Health /admin/system
+
+Icon: 🐛 Activity (lucide-react: Activity)
+System status
+Error logs
+Performance metrics
+Storage usage
+
+
+SECTION 10: HELP & RESOURCES
+┌─────────────────────────────────┐
+│ 📚 Help Center                  │
+│ 🎓 Training Videos              │
+│ 📖 Documentation                │
+│ 💡 What's New                   │
+│ 🐛 Report Bug                   │
+│ 💬 Contact Support              │
+└─────────────────────────────────┘
+1. Help Center /admin/help
+
+Icon: 📚 HelpCircle (lucide-react: HelpCircle)
+Knowledge base
+FAQs
+Search help articles
+
+2. Training Videos /admin/training
+
+Icon: 🎓 GraduationCap (lucide-react: Video)
+Video tutorials
+Onboarding guides
+
+3. Documentation /admin/docs
+
+Icon: 📖 BookOpen (lucide-react: BookOpen)
+Detailed guides
+API documentation
+
+4. What's New /admin/changelog
+
+Icon: 💡 Sparkles (lucide-react: Sparkles)
+Recent updates
+New features
+Release notes
+
+5. Report Bug /admin/feedback
+
+Icon: 🐛 Bug (lucide-react: Bug)
+Bug report form
+Feature requests
+
+6. Contact Support /admin/support-contact
+
+Icon: 💬 LifeBuoy (lucide-react: LifeBuoy)
+Contact admin support
+Emergency hotline
+Live chat
+
+
+🎨 SIDEBAR FOOTER (Bottom Section)
+┌─────────────────────────────────┐
+│ ────────────────────────────    │
+│ 📊 Storage: 425 MB / 10 GB      │
+│ 🟢 System: Healthy              │
+│ 📅 Event in 45 days             │
+│ ────────────────────────────    │
+│ [Collapse Sidebar ◄]            │
+└─────────────────────────────────┘
+Components:
+
+Storage indicator with progress bar
+System health status (color-coded)
+Event countdown
+Collapse/expand toggle button
+
+
+🎯 FLOATING ACTION BUTTON (FAB)
+Position: Bottom-right corner (fixed)
+Always Visible: On all admin pages
+        [+] ← Main FAB (Blue circle, large)
+Click to Expand Menu:
+    [📧] Send Email
+    [📥] Export Data
+    [🎫] Download Badges
+    [👤] New Registration
+    [+] ← Main FAB
+Speed Dial Actions (appears on click):
+
+Send Bulk Email - Navigate to /admin/emails/bulk
+Export Current View - Export whatever page you're on
+Download Badges - Quick badge download
+New Registration - Quick registration form
+
+
+⌨️ KEYBOARD SHORTCUTS OVERLAY
+Press: Ctrl+/ to show this modal
+┌──────────────────────────────────────────────┐
+│         Keyboard Shortcuts                   │
+├──────────────────────────────────────────────┤
+│  Navigation                                  │
+│  ───────────                                 │
+│  Ctrl+D        Dashboard                     │
+│  Ctrl+1        Registrations                 │
+│  Ctrl+M        Send Email                    │
+│  Ctrl+B        Badges                        │
+│  Ctrl+E        Export                        │
+│  Ctrl+K        Search                        │
+│  Ctrl+Q        Quick Actions                 │
+│                                              │
+│  Actions                                     │
+│  ───────                                     │
+│  Ctrl+N        New Registration              │
+│  Ctrl+S        Save                          │
+│  Ctrl+R        Refresh Data                  │
+│  Esc           Close Modal                   │
+│                                              │
+│  Tables                                      │
+│  ───────                                     │
+│  Space         Select Row                    │
+│  Ctrl+A        Select All                    │
+│  ↑↓            Navigate Rows                 │
+│  Enter         Open Details                  │
+└──────────────────────────────────────────────┘
+
+📱 MOBILE NAVIGATION
+Mobile Top Bar
+┌──────────────────────────────────────┐
+│ [☰]  GREAT DAYS    [🔔] [👤]        │
+└──────────────────────────────────────┘
+Mobile Bottom Navigation (Fixed)
+┌──────────────────────────────────────┐
+│ [📊]  [👥]  [+]  [💬]  [⚙️]         │
+│ Home  Reg  Add  Chat  More           │
+└──────────────────────────────────────┘
+Bottom Nav Items:
+
+Home (Dashboard)
+Registrations (Most used)
+Add (Quick actions)
+Support (Support inbox)
+More (Opens full menu)
+
+
+🎨 DESIGN SPECIFICATIONS
+Sidebar Styling
+css/* Sidebar */
+background: #ffffff
+width: 260px (expanded) / 60px (collapsed)
+border-right: 1px solid #e5e7eb
+
+/* Active Item */
+background: #eff6ff (light blue)
+border-left: 4px solid #2563eb (blue)
+font-weight: 600
+
+/* Hover */
+background: #f9fafb
+transition: 0.2s
+
+/* Icons */
+size: 20px
+color: #6b7280 (gray)
+active-color: #2563eb (blue)
+
+/* Badges */
+background: #ef4444 (red)
+color: #ffffff
+font-size: 12px
+padding: 2px 6px
+border-radius: 10px
+
+/* Section Headers */
+font-size: 11px
+text-transform: uppercase
+color: #9ca3af
+font-weight: 600
+padding: 12px 16px
+letter-spacing: 0.5px
+Button Styles
+css/* Primary Button */
+background: #2563eb
+color: #ffffff
+padding: 10px 20px
+border-radius: 8px
+hover: #1d4ed8
+
+/* Secondary Button */
+background: #ffffff
+border: 2px solid #2563eb
+color: #2563eb
+padding: 10px 20px
+border-radius: 8px
+
+/* Icon Button */
+padding: 8px
+border-radius: 6px
+hover-background: #f3f4f6
+
+/* FAB */
+width: 56px
+height: 56px
+border-radius: 50%
+shadow: 0 4px 6px rgba(0,0,0,0.1)
+background: #2563eb
+color: #ffffff

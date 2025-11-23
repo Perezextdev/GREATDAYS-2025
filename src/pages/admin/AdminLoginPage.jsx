@@ -17,13 +17,16 @@ export default function AdminLoginPage() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        console.log('[AdminLoginPage] handleSubmit called');
         setLoading(true);
         setError("");
         try {
+            console.log('[AdminLoginPage] calling login()');
             await login(email, password);
+            console.log('[AdminLoginPage] login successful, navigating to dashboard');
             navigate("/admin/dashboard");
         } catch (err) {
-            console.error(err);
+            console.error('[AdminLoginPage] login failed:', err);
             setError(err.message || "Login failed");
         } finally {
             setLoading(false);
@@ -154,6 +157,37 @@ export default function AdminLoginPage() {
                             >
                                 Don't have an account? Sign up
                             </Link>
+                        </div>
+
+                        <div className="text-center mt-4">
+                            <button
+                                type="button"
+                                onClick={async () => {
+                                    console.log('Testing raw fetch...');
+                                    const start = Date.now();
+                                    const url = `${import.meta.env.VITE_SUPABASE_URL}/rest/v1/registrations?select=*&head=true`;
+                                    const key = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+                                    try {
+                                        const response = await fetch(url, {
+                                            headers: {
+                                                'apikey': key,
+                                                'Authorization': `Bearer ${key}`
+                                            }
+                                        });
+                                        const duration = Date.now() - start;
+                                        console.log('Raw fetch result:', { status: response.status, duration });
+                                        alert(`Raw fetch finished in ${duration}ms. Status: ${response.status}`);
+                                    } catch (err) {
+                                        const duration = Date.now() - start;
+                                        console.error('Raw fetch error:', err);
+                                        alert(`Raw fetch failed in ${duration}ms. Error: ${err.message}`);
+                                    }
+                                }}
+                                className="text-xs text-green-500 underline"
+                            >
+                                Test Connectivity (Raw Fetch)
+                            </button>
                         </div>
                     </form>
                 </div>

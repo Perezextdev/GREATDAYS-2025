@@ -13,6 +13,22 @@ import { supabase, isSupabaseConfigured } from '../lib/supabaseClient';
 import { COUNTRIES, getCountryByCode } from '../utils/countries';
 import { generateAndSaveBadge, shouldGenerateBadge } from '../utils/badgeGenerator';
 
+const BRANCHES = [
+    { name: "Zaria (Headquarters)", details: "Graceland Close, Yan-karfe; Main auditorium with 1,000 capacity." },
+    { name: "Kaduna", details: "Danbira Street, Bustop by Narayi-Highcost Road, Narayi; Contact: 08037281683." },
+    { name: "Abuja", details: "FCT Active with resident pastors; Hosts events like miracle weekends." },
+    { name: "Lagos", details: "Focuses on raising pleasing people; Facebook: https://www.facebook.com/FDIMLagos/." },
+    { name: "Kano", details: "YouTube channel available; Emphasizes teachings on life and faith." },
+    { name: "Jalingo", details: "Anniversary events; YouTube: https://www.youtube.com/@fdimjal." },
+    { name: "Wukari", details: "Produces short films and trailers; YouTube: https://www.youtube.com/channel/UCoiK-LK1DQYAuukB38jbi2g." },
+    { name: "Zing", details: "Part of Taraba network; Limited specific details." },
+    { name: "Enugu", details: "Included in national branches." },
+    { name: "Gombe", details: "Historical Twitter activity; Focus on weekly questions." },
+    { name: "Yola", details: "Church Auditorium, Opp. LCCN Cathedral Fence; Contact: 08062826128." },
+    { name: "Yobe", details: "Part of expansion efforts." },
+    { name: "United Kingdom", details: "Fellowship centers for diaspora community." }
+];
+
 // Validation Schema with step-by-step validation
 const createStepSchema = (step) => {
     const baseSchemas = {
@@ -180,50 +196,85 @@ const Register = () => {
         try {
             if (isSupabaseConfigured()) {
                 let photoUrl = null;
+
+                // Upload photo using raw fetch if provided
                 if (fullData.profilePhoto) {
+                    console.log('[Registration] Uploading photo...');
                     const fileExt = fullData.profilePhoto.name.split('.').pop();
                     const fileName = `${Math.random()}.${fileExt}`;
-                    const { data: uploadData, error: uploadError } = await supabase.storage
-                        .from('profile-photos')
-                        .upload(fileName, fullData.profilePhoto);
-                    if (uploadError) throw uploadError;
-                    photoUrl = uploadData.path;
+
+                    const formDataObj = new FormData();
+                    formDataObj.append('file', fullData.profilePhoto);
+
+                    const uploadResponse = await fetch(
+                        `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/profile-photos/${fileName}`,
+                        {
+                            method: 'POST',
+                            headers: {
+                                'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
+                                'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`
+                            },
+                            body: formDataObj
+                        }
+                    );
+
+                    if (!uploadResponse.ok) {
+                        const uploadError = await uploadResponse.json();
+                        throw new Error(uploadError.message || 'Photo upload failed');
+                    }
+
+                    photoUrl = fileName;
+                    console.log('[Registration] Photo uploaded:', photoUrl);
                 }
 
-                const { data: insertData, error: insertError } = await supabase
-                    .from('registrations')
-                    .insert([{
-                        title: fullData.title,
-                        full_name: fullData.fullName,
-                        nationality: fullData.nationality,
-                        phone_number: fullData.phoneNumber,
-                        email: fullData.email,
-                        profile_photo_url: photoUrl,
-                        church_ministry: fullData.churchMinistry || null,
-                        church_unit: fullData.churchUnit,
-                        is_member: fullData.isMember === 'true',
-                        branch: fullData.isMember === 'true' ? fullData.branch : null,
-                        participation_mode: fullData.participationMode,
-                        location_type: fullData.participationMode === 'Onsite' ? fullData.locationType : null,
-                        needs_accommodation: fullData.needsAccommodation || false,
-                        accommodation_type: fullData.accommodationType || null,
-                        arrival_date: fullData.arrivalDate || null,
-                        departure_date: fullData.departureDate || null,
-                    }])
-                    .select();
+                // Insert registration using raw fetch
+                console.log('[Registration] Submitting registration...');
+                const registrationData = {
+                    title: fullData.title,
+                    full_name: fullData.fullName,
+                    nationality: fullData.nationality,
+                    phone_number: fullData.phoneNumber,
+                    email: fullData.email,
+                    profile_photo_url: photoUrl,
+                    church_ministry: fullData.churchMinistry || null,
+                    church_unit: fullData.churchUnit,
+                    is_member: fullData.isMember === 'true',
+                    branch: fullData.isMember === 'true' ? fullData.branch : null,
+                    participation_mode: fullData.participationMode,
+                    location_type: fullData.participationMode === 'Onsite' ? fullData.locationType : null,
+                    needs_accommodation: fullData.needsAccommodation || false,
+                    accommodation_type: fullData.accommodationType || null,
+                    arrival_date: fullData.arrivalDate || null,
+                    departure_date: fullData.departureDate || null,
+                };
 
-                if (insertError) throw insertError;
-                setRegistrationId(insertData[0]?.id || 'PENDING');
-
-                // Auto-generate badge for onsite attendees
-                if (fullData.participationMode === 'Onsite' && insertData[0]) {
-                    try {
-                        await generateAndSaveBadge(insertData[0]);
-                        console.log('Badge generated successfully for onsite attendee');
-                    } catch (badgeError) {
-                        console.error('Badge generation failed:', badgeError);
-                        // Don't fail registration if badge generation fails
+                const insertResponse = await fetch(
+                    `${import.meta.env.VITE_SUPABASE_URL}/rest/v1/registrations`,
+                    {
+                        method: 'POST',
+                        headers: {
+                            'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
+                            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+                            'Content-Type': 'application/json',
+                            'Prefer': 'return=representation'
+                        },
+                        body: JSON.stringify(registrationData)
                     }
+                );
+
+                if (!insertResponse.ok) {
+                    const insertError = await insertResponse.json();
+                    throw new Error(insertError.message || `Registration failed: ${insertResponse.status}`);
+                }
+
+                const insertData = await insertResponse.json();
+                setRegistrationId(insertData[0]?.id || 'PENDING');
+                console.log('[Registration] Success! ID:', insertData[0]?.id);
+
+                // Badge generation temporarily disabled due to complexity
+                // Admins can generate badges from the dashboard
+                if (fullData.participationMode === 'Onsite') {
+                    console.log('[Registration] Badge will be generated by admin');
                 }
             } else {
                 console.log('Registration Data:', fullData);
@@ -349,14 +400,14 @@ const Register = () => {
                                             {...register('title')}
                                             className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all"
                                         >
-                                            <option value="">Select Title</option>
-                                            <option value="Reverend">Reverend</option>
-                                            <option value="Pastor">Pastor</option>
-                                            <option value="Deacon">Deacon</option>
-                                            <option value="Deaconess">Deaconess</option>
-                                            <option value="Mr">Mr</option>
-                                            <option value="Mrs">Mrs</option>
-                                            <option value="Miss">Miss</option>
+                                            <option value="" className="text-black">Select Title</option>
+                                            <option value="Reverend" className="text-black">Reverend</option>
+                                            <option value="Pastor" className="text-black">Pastor</option>
+                                            <option value="Deacon" className="text-black">Deacon</option>
+                                            <option value="Deaconess" className="text-black">Deaconess</option>
+                                            <option value="Mr" className="text-black">Mr</option>
+                                            <option value="Mrs" className="text-black">Mrs</option>
+                                            <option value="Miss" className="text-black">Miss</option>
                                         </select>
                                         {errors.title && <p className="text-red-400 text-sm mt-1">{errors.title.message}</p>}
                                     </div>
@@ -388,9 +439,9 @@ const Register = () => {
                                                 {...register('nationality')}
                                                 className="w-full bg-white/5 border border-white/10 rounded-xl pl-11 pr-4 py-3 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 appearance-none transition-all"
                                             >
-                                                <option value="">Select Country</option>
+                                                <option value="" className="text-black">Select Country</option>
                                                 {COUNTRIES.map((country) => (
-                                                    <option key={country.code} value={country.code}>
+                                                    <option key={country.code} value={country.code} className="text-black">
                                                         {country.flag} {country.name}
                                                     </option>
                                                 ))}
@@ -536,15 +587,12 @@ const Register = () => {
                                                     {...register('branch')}
                                                     className="w-full bg-white/5 border border-white/10 rounded-xl pl-11 pr-4 py-3 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 appearance-none transition-all"
                                                 >
-                                                    <option value="">Select Branch</option>
-                                                    <option value="FDIM-HEADQUARTERS (ZARIA)">FDIM-HEADQUARTERS (ZARIA)</option>
-                                                    <option value="FDIM-LAGOS">FDIM-LAGOS</option>
-                                                    <option value="FDIM-ABUJA">FDIM-ABUJA</option>
-                                                    <option value="FDIM-ENUGU">FDIM-ENUGU</option>
-                                                    <option value="FDIM-TARABA">FDIM-TARABA</option>
-                                                    <option value="FDIM-JALINGO">FDIM-JALINGO</option>
-                                                    <option value="FDIM-KADUNA">FDIM-KADUNA</option>
-                                                    <option value="FDIM-KANO">FDIM-KANO</option>
+                                                    <option value="" className="text-black">Select Branch</option>
+                                                    {BRANCHES.map((branch) => (
+                                                        <option key={branch.name} value={branch.name} className="text-black">
+                                                            {branch.name}
+                                                        </option>
+                                                    ))}
                                                 </select>
                                                 <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 pointer-events-none" />
                                             </div>
@@ -579,19 +627,19 @@ const Register = () => {
                                             {...register('churchUnit')}
                                             className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all"
                                         >
-                                            <option value="">Select Unit</option>
-                                            <option value="PASTOR">Pastor</option>
-                                            <option value="LOC">LOC (Leaders of Cells)</option>
-                                            <option value="VOC">VOC (Vessels of Christ)</option>
-                                            <option value="USHER">Usher</option>
-                                            <option value="PROTOCOL">Protocol</option>
-                                            <option value="HELPDESK">Helpdesk</option>
-                                            <option value="MEDIA">Media</option>
-                                            <option value="TECHNICAL">Technical</option>
-                                            <option value="CHILDRENS_DEPARTMENT">Children's Department</option>
-                                            <option value="PROTOCOL_SECURITY">Protocol & Security</option>
-                                            <option value="TRANSPORT_LOGISTICS">Transport & Logistics</option>
-                                            <option value="SANCTUARY">Sanctuary</option>
+                                            <option value="" className="text-black">Select Unit</option>
+                                            <option value="PASTOR" className="text-black">Pastor</option>
+                                            <option value="LOC" className="text-black">LOC (Leaders of Cells)</option>
+                                            <option value="VOC" className="text-black">VOC (Vessels of Christ)</option>
+                                            <option value="USHER" className="text-black">Usher</option>
+                                            <option value="PROTOCOL" className="text-black">Protocol</option>
+                                            <option value="HELPDESK" className="text-black">Helpdesk</option>
+                                            <option value="MEDIA" className="text-black">Media</option>
+                                            <option value="TECHNICAL" className="text-black">Technical</option>
+                                            <option value="CHILDRENS_DEPARTMENT" className="text-black">Children's Department</option>
+                                            <option value="PROTOCOL_SECURITY" className="text-black">Protocol & Security</option>
+                                            <option value="TRANSPORT_LOGISTICS" className="text-black">Transport & Logistics</option>
+                                            <option value="SANCTUARY" className="text-black">Sanctuary</option>
                                         </select>
                                         {errors.churchUnit && <p className="text-red-400 text-sm mt-1">{errors.churchUnit.message}</p>}
                                     </div>
@@ -723,9 +771,9 @@ const Register = () => {
                                                             {...register('accommodationType')}
                                                             className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all"
                                                         >
-                                                            <option value="">Select Type</option>
-                                                            <option value="General">General (Camp/Shared)</option>
-                                                            <option value="Hotel">Hotel (Private)</option>
+                                                            <option value="" className="text-black">Select Type</option>
+                                                            <option value="General" className="text-black">General (Camp/Shared)</option>
+                                                            <option value="Hotel" className="text-black">Hotel (Private)</option>
                                                         </select>
                                                     </div>
 

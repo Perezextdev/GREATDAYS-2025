@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Outlet, useNavigate } from 'react-router-dom';
+import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import AdminSidebar from './AdminSidebar';
 import AdminHeader from './AdminHeader';
@@ -13,11 +13,13 @@ export default function AdminLayout() {
     const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
     const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
     const [isShortcutsOpen, setIsShortcutsOpen] = useState(false);
-    const { adminProfile } = useAuth();
+    const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+    const [isMobile, setIsMobile] = useState(false);
+    const location = useLocation();
+    const navigate = useNavigate();
 
+    // Auth check removed as it is handled by ProtectedRoute
     // Mobile detection
-    const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
-
     useEffect(() => {
         const handleResize = () => {
             setIsMobile(window.innerWidth < 1024);

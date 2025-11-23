@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     MessageCircle, X, Send, Loader2, AlertCircle,
-    CheckCircle, User, Bot, ArrowUp, Trash2
+    CheckCircle, User, Bot, ArrowUp, Trash2, Shield
 } from 'lucide-react';
 import { aiService } from '../services/aiService';
 import { chatService } from '../services/chatService';
@@ -15,37 +15,61 @@ export default function ChatBot() {
     const [isTyping, setIsTyping] = useState(false);
     const [error, setError] = useState(null);
     const [showEscalation, setShowEscalation] = useState(false);
-    const [escalationForm, setEscalationForm] = useState({ name: '', email: '' });
     const [userInfo, setUserInfo] = useState(null);
     const [showUserInfoForm, setShowUserInfoForm] = useState(false);
     const [userInfoForm, setUserInfoForm] = useState({ name: '', email: '' });
     const messagesEndRef = useRef(null);
     const inputRef = useRef(null);
+    const subscriptionRef = useRef(null);
 
     // Load chat session on mount
     useEffect(() => {
-        const session = chatService.getSession();
+        const initSession = async () => {
+            try {
+                const session = await chatService.getSession();
 
-        // Check if user info already exists in session
-        if (session.userInfo) {
-            setUserInfo(session.userInfo);
-            setShowUserInfoForm(false);
-        } else {
-            setShowUserInfoForm(true);
-        }
+                // Check if user info already exists in session
+                if (session.user_name && session.user_email) {
+                    setUserInfo({ name: session.user_name, email: session.user_email });
+                    setShowUserInfoForm(false);
+                } else {
+                    setShowUserInfoForm(true);
+                }
 
-        if (session.messages.length === 0) {
-            const welcomeMsg = {
-                id: Date.now(),
-                role: 'assistant',
-                content: CHATBOT_CONFIG.welcomeMessage,
-                timestamp: new Date().toISOString()
-            };
-            setMessages([welcomeMsg]);
-            chatService.addMessage('assistant', CHATBOT_CONFIG.welcomeMessage);
-        } else {
-            setMessages(session.messages);
-        }
+                if (session.messages.length === 0) {
+                    const welcomeMsg = {
+                        id: Date.now(),
+                        role: 'assistant',
+                        content: CHATBOT_CONFIG.welcomeMessage,
+                        created_at: new Date().toISOString()
+                    };
+                    setMessages([welcomeMsg]);
+                    // We don't save the welcome message to DB to avoid clutter, 
+                    // or we could if we want it persistent. For now, let's keep it local until user interacts.
+                } else {
+                    setMessages(session.messages);
+                }
+
+                // Subscribe to real-time messages
+                subscriptionRef.current = chatService.subscribeToMessages((newMessage) => {
+                    setMessages(prev => {
+                        // Avoid duplicates
+                        if (prev.find(m => m.id === newMessage.id)) return prev;
+                        return [...prev, newMessage];
+                    });
+                });
+
+            } catch (err) {
+                console.error('Failed to init chat session:', err);
+                setError('Failed to load chat history');
+            }
+        };
+
+        initSession();
+
+        return () => {
+            if (subscriptionRef.current) subscriptionRef.current();
+        };
     }, []);
 
     // Scroll to bottom when messages change
@@ -60,7 +84,7 @@ export default function ChatBot() {
         }
     }, [isOpen, showUserInfoForm]);
 
-    const handleUserInfoSubmit = (e) => {
+    const handleUserInfoSubmit = async (e) => {
         e.preventDefault();
         if (!userInfoForm.name || !userInfoForm.email) {
             alert('Please provide your name and email');
@@ -68,15 +92,17 @@ export default function ChatBot() {
         }
 
         // Save user info to session
-        chatService.saveUserInfo(userInfoForm);
+        await chatService.saveUserInfo(userInfoForm);
         setUserInfo(userInfoForm);
         setShowUserInfoForm(false);
 
         // Add greeting message
-        const greetingMsg = chatService.addMessage(
-            'assistant',
-            `Nice to meet you, ${userInfoForm.name}! 👋 How can I help you today?`
-        );
+        const greetingMsg = {
+            id: Date.now(),
+            role: 'assistant',
+            content: `Nice to meet you, ${userInfoForm.name}! 👋 How can I help you today?`,
+            created_at: new Date().toISOString()
+        };
         setMessages(prev => [...prev, greetingMsg]);
     };
 
@@ -95,31 +121,30 @@ export default function ChatBot() {
         setInputValue('');
         setError(null);
 
-        const userMsg = chatService.addMessage('user', userMessage);
-        setMessages(prev => [...prev, userMsg]);
-
-        // Check if should escalate
-        if (chatService.shouldEscalateMessage(userMessage)) {
-            setShowEscalation(true);
-            const escalationMsg = chatService.addMessage('assistant', CHATBOT_CONFIG.escalationMessage);
-            setMessages(prev => [...prev, escalationMsg]);
-            return;
-        }
-
-        // Get AI response
-        setIsTyping(true);
         try {
+            // Add user message to DB
+            await chatService.addMessage('user', userMessage);
+            // Note: Real-time subscription will update the UI
+
+            // Check if should escalate
+            if (chatService.shouldEscalateMessage(userMessage)) {
+                setShowEscalation(true);
+                await chatService.addMessage('assistant', CHATBOT_CONFIG.escalationMessage);
+                return;
+            }
+
+            // Get AI response
+            setIsTyping(true);
+
             if (!aiService.isConfigured()) {
                 throw new Error('AI service is not configured. Please contact support.');
             }
 
-            const conversationHistory = chatService.getConversationHistory();
+            const conversationHistory = await chatService.getConversationHistory();
             const response = await aiService.sendMessage(conversationHistory);
 
-            await new Promise(resolve => setTimeout(resolve, CHATBOT_CONFIG.typingDelay));
+            await chatService.addMessage('assistant', response);
 
-            const assistantMsg = chatService.addMessage('assistant', response);
-            setMessages(prev => [...prev, assistantMsg]);
         } catch (err) {
             console.error('Chat error:', err);
 
@@ -134,8 +159,13 @@ export default function ChatBot() {
             }
 
             setError(errorMessage);
-            const errorMsg = chatService.addMessage('assistant', errorMessage);
-            setMessages(prev => [...prev, errorMsg]);
+            // Only show error locally, don't save to DB
+            setMessages(prev => [...prev, {
+                id: Date.now(),
+                role: 'assistant',
+                content: errorMessage,
+                created_at: new Date().toISOString()
+            }]);
         } finally {
             setIsTyping(false);
         }
@@ -156,19 +186,17 @@ export default function ChatBot() {
             // Use stored user info for escalation
             const result = await chatService.escalateToSupport(userInfo);
             if (result.success) {
-                const successMsg = chatService.addMessage(
+                await chatService.addMessage(
                     'assistant',
-                    `✅ Your request has been escalated to our support team. Reference ID: ${result.requestId}. We'll get back to you at ${userInfo.email} shortly.`
+                    `✅ Your request has been escalated to our support team. Reference ID: ${result.requestId}. We'll get back to you at ${userInfo.email} shortly, or you can stay here and wait for an agent.`
                 );
-                setMessages(prev => [...prev, successMsg]);
                 setShowEscalation(false);
             }
         } catch (err) {
             console.error('Escalation error:', err);
             const errorMessage = 'Failed to escalate request. Please try again or contact support directly.';
             setError(errorMessage);
-            const errorMsg = chatService.addMessage('assistant', errorMessage);
-            setMessages(prev => [...prev, errorMsg]);
+            await chatService.addMessage('assistant', errorMessage);
         }
     };
 
@@ -181,9 +209,10 @@ export default function ChatBot() {
                 id: Date.now(),
                 role: 'assistant',
                 content: CHATBOT_CONFIG.welcomeMessage,
-                timestamp: new Date().toISOString()
+                created_at: new Date().toISOString()
             }]);
-            chatService.addMessage('assistant', CHATBOT_CONFIG.welcomeMessage);
+            // Re-init session
+            chatService.getSession();
         }
     };
 
@@ -304,20 +333,25 @@ export default function ChatBot() {
                                             key={msg.id}
                                             className={`flex gap-2 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
                                         >
-                                            {msg.role === 'assistant' && (
-                                                <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center text-white flex-shrink-0">
-                                                    <Bot size={18} />
+                                            {(msg.role === 'assistant' || msg.role === 'admin') && (
+                                                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white flex-shrink-0 ${msg.role === 'admin' ? 'bg-purple-600' : 'bg-gradient-to-r from-blue-600 to-purple-600'}`}>
+                                                    {msg.role === 'admin' ? <Shield size={16} /> : <Bot size={18} />}
                                                 </div>
                                             )}
                                             <div
                                                 className={`max-w-[75%] rounded-2xl px-4 py-2 ${msg.role === 'user'
                                                     ? 'bg-blue-600 text-white rounded-br-sm'
-                                                    : 'bg-white text-gray-800 rounded-bl-sm shadow-sm border border-gray-200'
+                                                    : msg.role === 'admin'
+                                                        ? 'bg-purple-50 text-gray-800 border border-purple-200 rounded-bl-sm'
+                                                        : 'bg-white text-gray-800 rounded-bl-sm shadow-sm border border-gray-200'
                                                     }`}
                                             >
+                                                {msg.role === 'admin' && (
+                                                    <p className="text-xs font-bold text-purple-600 mb-1">Support Agent</p>
+                                                )}
                                                 <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
                                                 <p className={`text-xs mt-1 ${msg.role === 'user' ? 'text-blue-100' : 'text-gray-400'}`}>
-                                                    {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                    {new Date(msg.created_at || msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                                 </p>
                                             </div>
                                             {msg.role === 'user' && (

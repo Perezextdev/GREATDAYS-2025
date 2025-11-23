@@ -70,12 +70,12 @@ const menuItems = [
     {
         section: 'REGISTRATIONS',
         items: [
-            { name: 'All Registrations', path: '/admin/registrations', icon: Users, badge: '245' },
-            { name: 'Online Participants', path: '/admin/registrations?mode=online', icon: Monitor, badge: '103' },
-            { name: 'Onsite Participants', path: '/admin/registrations?mode=onsite', icon: MapPin, badge: '142' },
-            { name: 'Accommodation', path: '/admin/accommodation', icon: Home, badge: '87' },
-            { name: 'Arrivals Calendar', path: '/admin/arrivals', icon: Calendar, badge: '5' },
-            { name: 'Pending', path: '/admin/registrations?status=pending', icon: Clock, badge: '3' },
+            { name: 'All Registrations', path: '/admin/registrations', icon: Users },
+            { name: 'Online Participants', path: '/admin/registrations?mode=online', icon: Monitor },
+            { name: 'Onsite Participants', path: '/admin/registrations?mode=onsite', icon: MapPin },
+            { name: 'Accommodation', path: '/admin/accommodation', icon: Home },
+            { name: 'Arrivals Calendar', path: '/admin/arrivals', icon: Calendar },
+            { name: 'Pending', path: '/admin/registrations?status=pending', icon: Clock },
         ]
     },
     {
@@ -92,7 +92,7 @@ const menuItems = [
     {
         section: 'CONTENT',
         items: [
-            { name: 'Testimonials', path: '/admin/testimonials', icon: Star, badge: '12' },
+            { name: 'Testimonials', path: '/admin/testimonials', icon: Star },
             { name: 'Badge Management', path: '/admin/badges', icon: CreditCard },
             { name: 'Media Library', path: '/admin/media', icon: Image },
             { name: 'Documents', path: '/admin/documents', icon: File },
@@ -101,7 +101,7 @@ const menuItems = [
     {
         section: 'SUPPORT',
         items: [
-            { name: 'Support Inbox', path: '/admin/support', icon: MessageCircle, badge: '8' },
+            { name: 'Support Inbox', path: '/admin/support', icon: MessageCircle },
             { name: 'Chatbot', path: '/admin/chatbot', icon: Bot },
             { name: 'Contact Log', path: '/admin/contacts', icon: Phone },
             { name: 'Help Articles', path: '/admin/help', icon: BookOpen },
@@ -111,12 +111,6 @@ const menuItems = [
         section: 'REPORTS',
         items: [
             { name: 'All Reports', path: '/admin/reports', icon: BarChart3 },
-            { name: 'Registration Reports', path: '/admin/reports/registrations', icon: Download },
-            { name: 'Accommodation Reports', path: '/admin/reports/accommodation', icon: Building },
-            { name: 'Meal Planning', path: '/admin/reports/meals', icon: UtensilsCrossed },
-            { name: 'Contact Lists', path: '/admin/reports/contacts', icon: UserCheck },
-            { name: 'Custom Reports', path: '/admin/reports/custom', icon: LineChart },
-            { name: 'Scheduled Reports', path: '/admin/reports/scheduled', icon: CalendarClock },
         ]
     },
     {
@@ -134,7 +128,7 @@ const menuItems = [
         section: 'TEAM',
         items: [
             { name: 'Admin Users', path: '/admin/team/users', icon: UsersRound },
-            { name: 'My Tasks', path: '/admin/tasks', icon: CheckSquare, badge: '5' },
+            { name: 'My Tasks', path: '/admin/tasks', icon: CheckSquare },
             { name: 'Team Chat', path: '/admin/chat', icon: MessagesSquare },
             { name: 'Performance', path: '/admin/performance', icon: Award },
             { name: 'Activity Log', path: '/admin/activity', icon: History },

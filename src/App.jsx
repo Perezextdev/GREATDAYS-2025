@@ -38,6 +38,12 @@ import QuickActionsPage from './pages/admin/QuickActionsPage';
 import EventOverviewPage from './pages/admin/EventOverviewPage';
 import AnnouncementsPage from './pages/admin/AnnouncementsPage';
 
+import AdminUsersPage from './pages/admin/team/AdminUsersPage';
+import MyTasksPage from './pages/admin/team/MyTasksPage';
+import TeamChatPage from './pages/admin/team/TeamChatPage';
+import PerformancePage from './pages/admin/team/PerformancePage';
+import ActivityLogPage from './pages/admin/team/ActivityLogPage';
+
 // Placeholder components for routes we haven't built yet
 // const AdminRegistrations = () => <div className="p-4">Registrations Page (Coming Soon)</div>;
 const AdminTestimonials = () => <div className="p-4">Testimonials Management (Coming Soon)</div>;
@@ -158,11 +164,11 @@ function App() {
               <Route path="schedule" element={<PlaceholderPage />} />
 
               {/* Team */}
-              <Route path="team/users" element={<PlaceholderPage />} />
-              <Route path="tasks" element={<PlaceholderPage />} />
-              <Route path="chat" element={<PlaceholderPage />} />
-              <Route path="performance" element={<PlaceholderPage />} />
-              <Route path="activity" element={<PlaceholderPage />} />
+              <Route path="team/users" element={<AdminUsersPage />} />
+              <Route path="tasks" element={<MyTasksPage />} />
+              <Route path="chat" element={<TeamChatPage />} />
+              <Route path="performance" element={<PerformancePage />} />
+              <Route path="activity" element={<ActivityLogPage />} />
 
               {/* System */}
               <Route path="settings" element={<SettingsPage />} />

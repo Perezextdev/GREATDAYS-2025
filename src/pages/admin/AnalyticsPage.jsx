@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { useAuth } from '../../context/AuthContext';
 import { supabase } from '../../lib/supabaseClient';
 import {
     calculateRegistrationTrends,
@@ -20,23 +21,35 @@ import { Calendar, Users, Hotel, Utensils, Download, TrendingUp, Globe, Building
 import { format } from 'date-fns';
 
 const AnalyticsPage = () => {
+    const { token } = useAuth();
     const [registrations, setRegistrations] = useState([]);
     const [loading, setLoading] = useState(true);
     const [analytics, setAnalytics] = useState(null);
 
     useEffect(() => {
         fetchRegistrations();
-    }, []);
+    }, [token]);
 
     const fetchRegistrations = async () => {
+        if (!token) return;
+
         try {
-            const { data, error } = await supabase
-                .from('registrations')
-                .select('*')
-                .order('created_at', { ascending: true });
+            setLoading(true);
+            console.log('[AnalyticsPage] Fetching registrations with token...');
 
-            if (error) throw error;
+            const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/rest/v1/registrations?select=*&order=created_at.asc`, {
+                headers: {
+                    'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
+                    'Authorization': `Bearer ${token}`
+                }
+            });
 
+            if (!response.ok) {
+                const err = await response.json();
+                throw new Error(err.message || `Failed to fetch registrations: ${response.status}`);
+            }
+
+            const data = await response.json();
             setRegistrations(data || []);
             calculateAnalytics(data || []);
         } catch (error) {

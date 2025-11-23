@@ -1,9 +1,12 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '../../lib/supabaseClient';
-import { Calendar, Clock, MapPin, CheckCircle, Search, Filter } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
+import { Calendar, Clock, MapPin, CheckCircle, Search, Filter, Download } from 'lucide-react';
 import { format, isToday, isTomorrow, parseISO } from 'date-fns';
+import { exportToExcel } from '../../utils/excelExport';
+import SkeletonLoader from '../../components/SkeletonLoader';
 
 export default function ArrivalsPage() {
+    const { token } = useAuth();
     const [arrivals, setArrivals] = useState([]);
     const [loading, setLoading] = useState(true);
     const [filterDate, setFilterDate] = useState('all'); // 'all', 'today', 'tomorrow'
@@ -11,18 +14,34 @@ export default function ArrivalsPage() {
 
     useEffect(() => {
         fetchArrivals();
-    }, []);
+    }, [token]);
 
     const fetchArrivals = async () => {
+        if (!token) {
+            console.log('[ArrivalsPage] Waiting for token...');
+            return;
+        }
+
         try {
             setLoading(true);
-            const { data, error } = await supabase
-                .from('registrations')
-                .select('*')
-                .not('arrival_date', 'is', null)
-                .order('arrival_date', { ascending: true });
+            console.log('[ArrivalsPage] Fetching with token...');
 
-            if (error) throw error;
+            const response = await fetch(
+                `${import.meta.env.VITE_SUPABASE_URL}/rest/v1/registrations?select=*&arrival_date=not.is.null&order=arrival_date.asc`,
+                {
+                    headers: {
+                        'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
+                        'Authorization': `Bearer ${token}`
+                    }
+                }
+            );
+
+            if (!response.ok) {
+                throw new Error(`Failed to fetch: ${response.status}`);
+            }
+
+            const data = await response.json();
+            console.log('[ArrivalsPage] Fetched arrivals:', data.length);
             setArrivals(data);
         } catch (error) {
             console.error('Error fetching arrivals:', error);
@@ -46,6 +65,19 @@ export default function ArrivalsPage() {
         return true;
     });
 
+    const handleExport = () => {
+        const dataToExport = filteredArrivals.map(reg => ({
+            'Full Name': reg.full_name,
+            'Phone': reg.phone_number,
+            'Email': reg.email,
+            'Arrival Date': reg.arrival_date,
+            'Departure Date': reg.departure_date,
+            'Location': reg.location_type,
+            'Accommodation': reg.accommodation_type
+        }));
+        exportToExcel(dataToExport, 'GreatDays_Arrivals');
+    };
+
     const getStatusColor = (dateString) => {
         const date = parseISO(dateString);
         if (isToday(date)) return 'bg-green-100 text-green-800';
@@ -62,6 +94,13 @@ export default function ArrivalsPage() {
                         <Calendar size={18} className="text-gray-500" />
                         <span className="text-sm font-medium">{new Date().toLocaleDateString()}</span>
                     </div>
+                    <button
+                        onClick={handleExport}
+                        className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                    >
+                        <Download size={18} className="mr-2" />
+                        Export Excel
+                    </button>
                 </div>
             </div>
 
@@ -105,8 +144,13 @@ export default function ArrivalsPage() {
             {/* List */}
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
                 {loading ? (
-                    <div className="p-10 flex justify-center">
-                        <div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-600 border-t-transparent"></div>
+                    <div className="p-6">
+                        <SkeletonLoader />
+                        <div className="mt-4 space-y-3">
+                            {[...Array(5)].map((_, i) => (
+                                <div key={i} className="h-20 bg-gray-100 rounded animate-pulse"></div>
+                            ))}
+                        </div>
                     </div>
                 ) : filteredArrivals.length === 0 ? (
                     <div className="p-10 text-center text-gray-500">

@@ -1,8 +1,12 @@
 import { useState } from 'react';
 import { Calendar, Users, Home, Utensils, MapPin, TrendingUp, AlertCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useDashboardData } from '../../hooks/useDashboardData';
+import SkeletonLoader from '../../components/SkeletonLoader';
 
 export default function EventOverviewPage() {
+    const { metrics, loading } = useDashboardData();
+
     const eventInfo = {
         name: 'GREAT DAYS 2025',
         dates: 'December 15-21, 2025',
@@ -12,22 +16,75 @@ export default function EventOverviewPage() {
     };
 
     const stats = [
-        { label: 'Total Registered', value: '245', icon: Users, color: 'blue', link: '/admin/registrations' },
-        { label: 'Onsite Participants', value: '142', icon: MapPin, color: 'green', link: '/admin/registrations?mode=onsite' },
-        { label: 'Online Participants', value: '103', icon: TrendingUp, color: 'orange', link: '/admin/registrations?mode=online' },
-        { label: 'Accommodation Requests', value: '87', icon: Home, color: 'purple', link: '/admin/accommodation' },
-        { label: 'Meal Planning', value: '65', icon: Utensils, color: 'red', link: '/admin/meals' },
-        { label: 'Days Until Event', value: eventInfo.daysUntil, icon: Calendar, color: 'indigo', link: null },
+        {
+            label: 'Total Registered',
+            value: metrics.totalRegistrations,
+            icon: Users,
+            color: 'blue',
+            link: '/admin/registrations'
+        },
+        {
+            label: 'Onsite Participants',
+            value: metrics.onsiteCount,
+            icon: MapPin,
+            color: 'green',
+            link: '/admin/registrations?mode=onsite'
+        },
+        {
+            label: 'Online Participants',
+            value: metrics.onlineCount,
+            icon: TrendingUp,
+            color: 'orange',
+            link: '/admin/registrations?mode=online'
+        },
+        {
+            label: 'Accommodation Requests',
+            value: metrics.needsAccommodation,
+            icon: Home,
+            color: 'purple',
+            link: '/admin/accommodation'
+        },
+        {
+            label: 'Meal Planning',
+            value: metrics.onsiteCount, // Assuming onsite = meals needed
+            icon: Utensils,
+            color: 'red',
+            link: '/admin/reports'
+        },
+        {
+            label: 'Days Until Event',
+            value: eventInfo.daysUntil,
+            icon: Calendar,
+            color: 'indigo',
+            link: null
+        },
     ];
 
     const quickLinks = [
         { name: 'Check-In Management', path: '/admin/check-in', description: 'Manage attendee check-ins' },
         { name: 'Arrivals Calendar', path: '/admin/arrivals', description: 'View expected arrivals' },
         { name: 'Accommodation', path: '/admin/accommodation', description: 'Manage accommodation' },
-        { name: 'Meal Planning', path: '/admin/meals', description: 'Plan and assign meals' },
+        { name: 'Session Tracking', path: '/admin/sessions', description: 'Track event sessions' },
         { name: 'Announcements', path: '/admin/announcements', description: 'Send event announcements' },
-        { name: 'Schedule', path: '/admin/schedule', description: 'View event schedule' },
+        { name: 'Live Dashboard', path: '/admin/live', description: 'Real-time monitoring' },
     ];
+
+    if (loading) {
+        return (
+            <div className="space-y-6">
+                <div>
+                    <h1 className="text-2xl font-bold text-gray-900">Event Overview</h1>
+                    <p className="text-gray-500">Comprehensive view of {eventInfo.name}</p>
+                </div>
+                <SkeletonLoader />
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {[...Array(6)].map((_, i) => (
+                        <SkeletonLoader key={i} variant="card" />
+                    ))}
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="space-y-6">
@@ -105,3 +162,4 @@ export default function EventOverviewPage() {
         </div>
     );
 }
+

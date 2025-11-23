@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useDashboardData } from '../../hooks/useDashboardData';
+import SkeletonLoader from '../../components/SkeletonLoader';
+import { supabase } from '../../lib/supabaseClient';
 import {
     Users, Wifi, MapPin, MessageSquare, ArrowUp, ArrowDown, Minus,
     Home, Calendar, Download, Mail, FileSpreadsheet, RefreshCw,
@@ -15,17 +17,86 @@ import {
 import { format } from 'date-fns';
 
 export default function AdminDashboard() {
-    const { metrics, loading, refresh } = useDashboardData();
+    const { metrics, loading, error, refresh } = useDashboardData();
     const [lastUpdated, setLastUpdated] = useState(new Date());
 
     useEffect(() => {
         setLastUpdated(new Date());
-    }, [metrics]);
+        console.log('[AdminDashboard] Supabase URL:', import.meta.env.VITE_SUPABASE_URL);
+        console.log('[AdminDashboard] Supabase Key exists:', !!import.meta.env.VITE_SUPABASE_ANON_KEY);
+        if (error) console.error('[AdminDashboard] Hook Error:', error);
+        if (metrics.error) console.error('[AdminDashboard] Metrics Error:', metrics.error);
+    }, [metrics, error]);
 
     if (loading) {
         return (
-            <div className="flex h-96 items-center justify-center">
-                <div className="h-12 w-12 animate-spin rounded-full border-4 border-indigo-600 border-t-transparent"></div>
+            <div className="space-y-6">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div>
+                        <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
+                        <p className="text-gray-500">GREAT DAYS 2025 Event Overview</p>
+                    </div>
+                </div>
+                <SkeletonLoader />
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    {[...Array(4)].map((_, i) => (
+                        <SkeletonLoader key={i} variant="card" />
+                    ))}
+                </div>
+            </div>
+        );
+    }
+    if (metrics.error || (error && !metrics.totalRegistrations)) { // Check for hook error or metrics error
+        return (
+            <div className="flex h-96 flex-col items-center justify-center space-y-4">
+                <div className="text-red-500 font-medium">Failed to load dashboard data</div>
+                <p className="text-sm text-gray-500">{error || metrics.error || 'Unknown error'}</p>
+                <button
+                    onClick={refresh}
+                    className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors"
+                >
+                    Retry
+                </button>
+                <button
+                    onClick={async () => {
+                        console.log('Testing simple query...');
+                        const start = Date.now();
+                        const { count, error } = await supabase.from('registrations').select('*', { count: 'exact', head: true });
+                        const duration = Date.now() - start;
+                        console.log('Simple query result:', { count, error, duration });
+                        alert(`Query finished in ${duration}ms. Count: ${count}. Error: ${error?.message}`);
+                    }}
+                    className="mt-4 text-xs text-blue-500 underline block"
+                >
+                    Test Simple Query (Client Lib)
+                </button>
+                <button
+                    onClick={async () => {
+                        console.log('Testing raw fetch...');
+                        const start = Date.now();
+                        const url = `${import.meta.env.VITE_SUPABASE_URL}/rest/v1/registrations?select=*&head=true`;
+                        const key = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+                        try {
+                            const response = await fetch(url, {
+                                headers: {
+                                    'apikey': key,
+                                    'Authorization': `Bearer ${key}`
+                                }
+                            });
+                            const duration = Date.now() - start;
+                            console.log('Raw fetch result:', { status: response.status, duration });
+                            alert(`Raw fetch finished in ${duration}ms. Status: ${response.status}`);
+                        } catch (err) {
+                            const duration = Date.now() - start;
+                            console.error('Raw fetch error:', err);
+                            alert(`Raw fetch failed in ${duration}ms. Error: ${err.message}`);
+                        }
+                    }}
+                    className="mt-2 text-xs text-green-500 underline block"
+                >
+                    Test Raw Fetch (Direct REST)
+                </button>
             </div>
         );
     }
@@ -40,6 +111,19 @@ export default function AdminDashboard() {
                     <p className="text-xs text-gray-400 mt-1">
                         Last updated: {lastUpdated.toLocaleTimeString()}
                     </p>
+                    <button
+                        onClick={async () => {
+                            console.log('Testing simple query...');
+                            const start = Date.now();
+                            const { count, error } = await supabase.from('registrations').select('*', { count: 'exact', head: true });
+                            const duration = Date.now() - start;
+                            console.log('Simple query result:', { count, error, duration });
+                            alert(`Query finished in ${duration}ms. Count: ${count}. Error: ${error?.message}`);
+                        }}
+                        className="mt-2 text-xs text-blue-500 underline"
+                    >
+                        Test Simple Query
+                    </button>
                 </div>
                 <div className="flex flex-wrap gap-2">
                     <button onClick={refresh} className="flex items-center px-3 py-2 bg-white border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">

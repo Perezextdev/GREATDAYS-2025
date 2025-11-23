@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '../lib/supabaseClient';
+import { useAuth } from '../context/AuthContext';
 
 export function useDashboardData() {
+    const { token } = useAuth();
     const [metrics, setMetrics] = useState({
         totalRegistrations: 0,
         onlineCount: 0,
@@ -40,29 +41,48 @@ export function useDashboardData() {
     const [error, setError] = useState(null);
 
     const fetchDashboardMetrics = async () => {
+        // If no token, we can't fetch data (unless public, but these are protected)
+        if (!token) {
+            // If we are still loading the session, keep loading true. 
+            // But if we have no token and are not loading, then we should stop.
+            // However, useAuth handles the initial loading state.
+            // Here we just wait for token.
+            return;
+        }
+
         try {
             setLoading(true);
+            console.log('[useDashboardData] Fetching data with token...');
 
-            // Fetch all registrations
-            const { data: registrations, error: regError } = await supabase
-                .from('registrations')
-                .select('*')
-                .order('created_at', { ascending: false });
+            const headers = {
+                'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
+                'Authorization': `Bearer ${token}`
+            };
 
-            if (regError) throw regError;
+            // Fetch registrations
+            const regPromise = fetch(`${import.meta.env.VITE_SUPABASE_URL}/rest/v1/registrations?select=*&order=created_at.desc`, { headers });
 
             // Fetch pending support requests
-            const { data: supportRequests, error: supError } = await supabase
-                .from('support_requests')
-                .select('*')
-                .eq('status', 'new');
+            const supPromise = fetch(`${import.meta.env.VITE_SUPABASE_URL}/rest/v1/support_requests?select=*&status=eq.new`, { headers });
 
-            if (supError) throw supError;
+            const [regRes, supRes] = await Promise.all([regPromise, supPromise]);
+
+            if (!regRes.ok) {
+                const err = await regRes.json();
+                throw new Error(err.message || `Failed to fetch registrations: ${regRes.status}`);
+            }
+            if (!supRes.ok) {
+                const err = await supRes.json();
+                throw new Error(err.message || `Failed to fetch support requests: ${supRes.status}`);
+            }
+
+            const registrations = await regRes.json();
+            const supportRequests = await supRes.json();
 
             // Calculate Metrics
             const totalRegistrations = registrations?.length || 0;
-            const onlineCount = registrations?.filter(r => r.mode_of_participation === 'online').length || 0;
-            const onsiteCount = registrations?.filter(r => r.mode_of_participation === 'onsite').length || 0;
+            const onlineCount = registrations?.filter(r => r.participation_mode === 'Online').length || 0;
+            const onsiteCount = registrations?.filter(r => r.participation_mode === 'Onsite').length || 0;
             const pendingSupport = supportRequests?.length || 0;
 
             // Recent Registrations (last 10)
@@ -78,18 +98,18 @@ export function useDashboardData() {
                     const date = new Date(curr.created_at).toISOString().split('T')[0];
                     if (!acc[date]) acc[date] = { date, online: 0, onsite: 0, total: 0 };
                     acc[date].total += 1;
-                    if (curr.mode_of_participation === 'online') acc[date].online += 1;
-                    if (curr.mode_of_participation === 'onsite') acc[date].onsite += 1;
+                    if (curr.participation_mode === 'Online') acc[date].online += 1;
+                    if (curr.participation_mode === 'Onsite') acc[date].onsite += 1;
                     return acc;
                 }, {});
 
             const registrationTrends = Object.values(trendData || {}).sort((a, b) => new Date(a.date) - new Date(b.date));
 
             // Accommodation Stats
-            const onsiteRegs = registrations?.filter(r => r.mode_of_participation === 'onsite') || [];
-            const generalAccom = onsiteRegs.filter(r => r.general_accommodation).length;
-            const hotelAccom = onsiteRegs.filter(r => r.hotel_accommodation).length;
-            const noAccom = onsiteRegs.filter(r => !r.general_accommodation && !r.hotel_accommodation).length;
+            const onsiteRegs = registrations?.filter(r => r.participation_mode === 'Onsite') || [];
+            const generalAccom = onsiteRegs.filter(r => r.needs_accommodation && r.accommodation_type === 'General').length;
+            const hotelAccom = onsiteRegs.filter(r => r.needs_accommodation && r.accommodation_type === 'Hotel').length;
+            const noAccom = onsiteRegs.filter(r => !r.needs_accommodation).length;
 
             // Daily Arrivals
             const dailyArrivals = onsiteRegs.reduce((acc, curr) => {
@@ -102,10 +122,8 @@ export function useDashboardData() {
             }, {});
 
             // Meal Stats (Outside Zaria only)
-            const outsideZariaAttendees = onsiteRegs.filter(r => r.location === 'outside_zaria');
+            const outsideZariaAttendees = onsiteRegs.filter(r => r.location_type === 'Outside Zaria');
             const totalAttendeesWithMeals = outsideZariaAttendees.length;
-            // Simplified meal calc (assuming 3 meals/day for duration)
-            // In a real app, we'd calculate based on arrival/departure dates
             const totalMeals = totalAttendeesWithMeals * 3 * 7; // Placeholder logic
             const avgPerDay = totalMeals / 7;
 
@@ -125,8 +143,8 @@ export function useDashboardData() {
                 .sort((a, b) => b.count - a.count);
 
             // Location Stats
-            const withinZaria = onsiteRegs.filter(r => r.location === 'within_zaria').length;
-            const outsideZaria = onsiteRegs.filter(r => r.location === 'outside_zaria').length;
+            const withinZaria = onsiteRegs.filter(r => r.location_type === 'Within Zaria').length;
+            const outsideZaria = onsiteRegs.filter(r => r.location_type === 'Outside Zaria').length;
 
             const byNationality = registrations?.reduce((acc, curr) => {
                 const nat = curr.nationality || 'Unknown';
@@ -170,7 +188,7 @@ export function useDashboardData() {
                     totalAttendees: totalAttendeesWithMeals,
                     totalMeals,
                     avgPerDay,
-                    dailyBreakdown: [] // Populate if needed
+                    dailyBreakdown: []
                 },
                 memberStats: {
                     members,
@@ -179,11 +197,13 @@ export function useDashboardData() {
                 },
                 locationStats: {
                     withinZaria,
+                    withinZaria,
                     outsideZaria,
                     byNationality: nationalityStats
                 },
                 unitStats
             });
+            setError(null);
 
         } catch (err) {
             console.error('Error fetching dashboard metrics:', err);
@@ -195,22 +215,8 @@ export function useDashboardData() {
 
     useEffect(() => {
         fetchDashboardMetrics();
-
-        // Set up real-time subscription for registrations
-        const subscription = supabase
-            .channel('dashboard_updates')
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'registrations' }, () => {
-                fetchDashboardMetrics();
-            })
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'support_requests' }, () => {
-                fetchDashboardMetrics();
-            })
-            .subscribe();
-
-        return () => {
-            subscription.unsubscribe();
-        };
-    }, []);
+        // Realtime subscription removed to prevent client library hangs
+    }, [token]);
 
     return { metrics, loading, error, refresh: fetchDashboardMetrics };
 }
