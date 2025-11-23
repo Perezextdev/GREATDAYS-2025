@@ -32,37 +32,39 @@ class AIService {
             throw new Error('AI service is not configured. Please check your API keys.');
         }
 
-        let lastError;
-        for (let attempt = 1; attempt <= this.maxRetries; attempt++) {
-            try {
-                console.log(`AI Service: Attempt ${attempt}/${this.maxRetries}`);
+        const providers = [];
+        if (this.openaiKey) providers.push('openai');
+        if (this.openrouterKey) providers.push('openrouter');
+        if (this.geminiKey) providers.push('gemini');
 
-                if (this.provider === 'openai' && this.openaiKey) {
+        // Sort providers to put the preferred one first
+        providers.sort((a, b) => {
+            if (a === this.provider) return -1;
+            if (b === this.provider) return 1;
+            return 0;
+        });
+
+        let lastError;
+
+        for (const provider of providers) {
+            try {
+                console.log(`AI Service: Trying provider ${provider}...`);
+
+                if (provider === 'openai') {
                     return await this.sendToOpenAI(messages);
-                } else if (this.provider === 'openrouter' && this.openrouterKey) {
+                } else if (provider === 'openrouter') {
                     return await this.sendToOpenRouter(messages);
-                } else if (this.provider === 'gemini' && this.geminiKey) {
+                } else if (provider === 'gemini') {
                     return await this.sendToGemini(messages);
                 }
             } catch (error) {
+                console.error(`AI Service Error (${provider}):`, error);
                 lastError = error;
-                console.error(`AI Service Error (attempt ${attempt}):`, error);
-
-                // Don't retry on certain errors
-                if (error.message?.includes('API key') || error.message?.includes('401')) {
-                    throw error;
-                }
-
-                // Wait before retrying (exponential backoff)
-                if (attempt < this.maxRetries) {
-                    const delay = this.retryDelay * Math.pow(2, attempt - 1);
-                    console.log(`Retrying in ${delay}ms...`);
-                    await new Promise(resolve => setTimeout(resolve, delay));
-                }
+                // Continue to next provider
             }
         }
 
-        throw lastError || new Error('Failed to get AI response after multiple attempts');
+        throw lastError || new Error('All AI providers failed to respond.');
     }
 
     /**

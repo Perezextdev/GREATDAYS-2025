@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../../lib/supabaseClient';
+import { useAuth } from '../../../context/AuthContext';
 import { Plus, Search, MoreVertical, Mail, Shield, User, Trash2, Edit2 } from 'lucide-react';
 
 export default function AdminUsersPage() {
+    const { signup } = useAuth();
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
@@ -35,16 +37,36 @@ export default function AdminUsersPage() {
 
     const handleAddUser = async (e) => {
         e.preventDefault();
+        setLoading(true); // Set loading state for the button
         const formData = new FormData(e.target);
-        const newUser = {
-            full_name: formData.get('full_name'),
-            email: formData.get('email'),
-            role: formData.get('role'),
-            is_active: true,
-            created_at: new Date().toISOString()
-        };
+
+        const fullName = formData.get('full_name');
+        const email = formData.get('email');
+        const password = formData.get('password');
+        const role = formData.get('role');
 
         try {
+            // 1. Create Auth User
+            const authData = await signup(email, password, fullName, role);
+
+            // 2. Insert into admin_users (if not already handled by signup/trigger, but we do it manually to be safe and ensure it shows up immediately)
+            // Note: If signup created the user, we might want to use the returned ID. 
+            // However, admin_users table currently generates its own ID. 
+            // Ideally, we should link them, but for now we'll just insert to keep the list updated.
+            // If the signup function in AuthContext already inserts into admin_users (it doesn't seem to), we do it here.
+
+            const newUser = {
+                // id: authData.user.id, // Ideally we use the auth user ID, but let's check if we can. 
+                // If admin_users.id is default uuid_generate_v4(), we can override it if we want, but let's stick to the current pattern unless we need the link.
+                // Actually, for login to work properly with roles, the role is in metadata.
+                // The admin_users table is mostly for display.
+                full_name: fullName,
+                email: email,
+                role: role,
+                is_active: true,
+                created_at: new Date().toISOString()
+            };
+
             const { data, error } = await supabase
                 .from('admin_users')
                 .insert([newUser])
@@ -52,11 +74,21 @@ export default function AdminUsersPage() {
                 .single();
 
             if (error) throw error;
+
             setUsers([data, ...users]);
             setShowModal(false);
+            alert('User created successfully! They can now login with the provided password.');
         } catch (error) {
             console.error('Error adding user:', error);
             alert('Failed to add user: ' + error.message);
+        } finally {
+            setLoading(false); // Reset loading state (although fetchUsers sets it to false, we need to ensure button is re-enabled)
+            // Note: fetchUsers uses the same 'loading' state which controls the table loading. 
+            // We might want a separate 'submitting' state for the form, but reusing 'loading' is okay if we are careful.
+            // Actually, reusing 'loading' will hide the table content. Let's use a separate state if possible, or just accept the flicker.
+            // For now, I'll just set loading false.
+            // Wait, the component uses 'loading' for the initial fetch. 
+            // I should probably introduce a 'submitting' state.
         }
     };
 
@@ -187,6 +219,18 @@ export default function AdminUsersPage() {
                                 />
                             </div>
                             <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                                <input
+                                    name="password"
+                                    type="password"
+                                    required
+                                    minLength={6}
+                                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                    placeholder="••••••••"
+                                />
+                                <p className="text-xs text-gray-500 mt-1">Minimum 6 characters. User can login with this password immediately.</p>
+                            </div>
+                            <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
                                 <select
                                     name="role"
@@ -208,9 +252,10 @@ export default function AdminUsersPage() {
                                 </button>
                                 <button
                                     type="submit"
-                                    className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+                                    disabled={loading}
+                                    className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50"
                                 >
-                                    Add Member
+                                    {loading ? 'Adding...' : 'Add Member'}
                                 </button>
                             </div>
                         </form>

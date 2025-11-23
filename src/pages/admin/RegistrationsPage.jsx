@@ -274,39 +274,39 @@ export default function RegistrationsPage() {
 
             {/* Analytics Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200 flex items-center">
+                <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 flex items-center">
                     <div className="p-3 rounded-full bg-indigo-100 text-indigo-600 mr-4">
                         <Users size={24} />
                     </div>
                     <div>
-                        <p className="text-sm text-gray-500">Total Registrations</p>
-                        <p className="text-2xl font-bold text-gray-900">{analytics.total}</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">Total Registrations</p>
+                        <p className="text-2xl font-bold text-gray-900 dark:text-white">{analytics.total}</p>
                         <p className="text-xs text-gray-400">All time</p>
                     </div>
                 </div>
-                <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200 flex items-center">
+                <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 flex items-center">
                     <div className="p-3 rounded-full bg-blue-100 text-blue-600 mr-4">
                         <Home size={24} />
                     </div>
                     <div>
-                        <p className="text-sm text-gray-500">Member vs Non-Member</p>
-                        <div className="flex gap-2 text-sm">
-                            <span className="font-semibold text-gray-900">{analytics.members}</span> Members
-                            <span className="text-gray-300">|</span>
-                            <span className="font-semibold text-gray-900">{analytics.nonMembers}</span> Guests
+                        <p className="text-sm text-gray-500 dark:text-gray-400">Member vs Non-Member</p>
+                        <div className="flex gap-2 text-sm text-gray-600 dark:text-gray-300">
+                            <span className="font-semibold text-gray-900 dark:text-white">{analytics.members}</span> Members
+                            <span className="text-gray-300 dark:text-gray-600">|</span>
+                            <span className="font-semibold text-gray-900 dark:text-white">{analytics.nonMembers}</span> Guests
                         </div>
                     </div>
                 </div>
-                <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200 flex items-center">
+                <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 flex items-center">
                     <div className="p-3 rounded-full bg-green-100 text-green-600 mr-4">
                         <MapPin size={24} />
                     </div>
                     <div>
-                        <p className="text-sm text-gray-500">Location Breakdown</p>
-                        <div className="flex gap-2 text-sm">
-                            <span className="font-semibold text-gray-900">{analytics.withinZaria}</span> Zaria
-                            <span className="text-gray-300">|</span>
-                            <span className="font-semibold text-gray-900">{analytics.outsideZaria}</span> Outside
+                        <p className="text-sm text-gray-500 dark:text-gray-400">Location Breakdown</p>
+                        <div className="flex gap-2 text-sm text-gray-600 dark:text-gray-300">
+                            <span className="font-semibold text-gray-900 dark:text-white">{analytics.withinZaria}</span> Zaria
+                            <span className="text-gray-300 dark:text-gray-600">|</span>
+                            <span className="font-semibold text-gray-900 dark:text-white">{analytics.outsideZaria}</span> Outside
                         </div>
                     </div>
                 </div>

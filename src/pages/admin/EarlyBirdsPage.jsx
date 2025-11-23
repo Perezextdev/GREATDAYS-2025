@@ -22,7 +22,7 @@ export default function EarlyBirdsPage() {
 
             // Fetch first 50 Within Zaria registrants ordered by created_at
             const withinRes = await fetch(
-                `${import.meta.env.VITE_SUPABASE_URL}/rest/v1/registrations?location_type=eq.Within&order=created_at.asc&limit=50`,
+                `${import.meta.env.VITE_SUPABASE_URL}/rest/v1/registrations?location_type=eq.Within%20Zaria&order=created_at.asc&limit=50`,
                 {
                     headers: {
                         'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
@@ -34,7 +34,7 @@ export default function EarlyBirdsPage() {
 
             // Fetch first 50 Outside Zaria registrants ordered by created_at
             const outsideRes = await fetch(
-                `${import.meta.env.VITE_SUPABASE_URL}/rest/v1/registrations?location_type=eq.Outside&order=created_at.asc&limit=50`,
+                `${import.meta.env.VITE_SUPABASE_URL}/rest/v1/registrations?location_type=eq.Outside%20Zaria&order=created_at.asc&limit=50`,
                 {
                     headers: {
                         'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,

@@ -33,8 +33,8 @@ export default function AdminDashboard() {
             <div className="space-y-6">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div>
-                        <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-                        <p className="text-gray-500">GREAT DAYS 2025 Event Overview</p>
+                        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Dashboard</h1>
+                        <p className="text-gray-500 dark:text-gray-400">GREAT DAYS 2025 Event Overview</p>
                     </div>
                 </div>
                 <SkeletonLoader />
@@ -106,8 +106,8 @@ export default function AdminDashboard() {
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-                    <p className="text-gray-500">GREAT DAYS 2025 Event Overview</p>
+                    <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Dashboard</h1>
+                    <p className="text-gray-500 dark:text-gray-400">GREAT DAYS 2025 Event Overview</p>
                     <p className="text-xs text-gray-400 mt-1">
                         Last updated: {lastUpdated.toLocaleTimeString()}
                     </p>
@@ -181,9 +181,9 @@ export default function AdminDashboard() {
             </div>
 
             {/* SECTION 2: REGISTRATION TRENDS */}
-            <div className="bg-white rounded-lg shadow-sm p-6">
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
                 <div className="flex items-center justify-between mb-6">
-                    <h3 className="text-lg font-semibold text-gray-900">Registration Trends</h3>
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Registration Trends</h3>
                     <div className="flex space-x-2">
                         <span className="text-xs font-medium px-2 py-1 bg-gray-100 rounded text-gray-600">Last 30 Days</span>
                     </div>
@@ -219,8 +219,8 @@ export default function AdminDashboard() {
             {/* SECTION 3: ACCOMMODATION OVERVIEW */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Accommodation Requests */}
-                <div className="bg-white rounded-lg shadow-sm p-6">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Accommodation Overview</h3>
+                <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Accommodation Overview</h3>
                     <div className="grid grid-cols-3 gap-4 mb-6">
                         <div className="text-center p-3 bg-gray-50 rounded-lg">
                             <p className="text-xs text-gray-500 uppercase">Needing</p>
@@ -263,8 +263,8 @@ export default function AdminDashboard() {
                 </div>
 
                 {/* Daily Arrivals Forecast */}
-                <div className="bg-white rounded-lg shadow-sm p-6">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Upcoming Arrivals</h3>
+                <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Upcoming Arrivals</h3>
                     <div className="overflow-y-auto max-h-80">
                         <table className="min-w-full divide-y divide-gray-200">
                             <thead className="bg-gray-50 sticky top-0">
@@ -306,9 +306,9 @@ export default function AdminDashboard() {
             </div>
 
             {/* SECTION 4: MEAL PLANNING */}
-            <div className="bg-white rounded-lg shadow-sm p-6">
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
                 <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-semibold text-gray-900">Meal Planning</h3>
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Meal Planning</h3>
                     <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full">Outside Zaria Only</span>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
@@ -351,8 +351,8 @@ export default function AdminDashboard() {
             {/* SECTION 5: MEMBER & LOCATION ANALYTICS */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Member Status */}
-                <div className="bg-white rounded-lg shadow-sm p-6">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Member Distribution</h3>
+                <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Member Distribution</h3>
                     <div className="flex flex-col md:flex-row items-center">
                         <div className="h-64 w-full md:w-1/2">
                             <ResponsiveContainer width="100%" height="100%">
@@ -400,8 +400,8 @@ export default function AdminDashboard() {
                 </div>
 
                 {/* Location Distribution */}
-                <div className="bg-white rounded-lg shadow-sm p-6">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Geographic Distribution</h3>
+                <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Geographic Distribution</h3>
                     <div className="flex flex-col md:flex-row items-center">
                         <div className="h-64 w-full md:w-1/2">
                             <ResponsiveContainer width="100%" height="100%">
@@ -443,8 +443,8 @@ export default function AdminDashboard() {
             </div>
 
             {/* SECTION 6: UNIT DISTRIBUTION */}
-            <div className="bg-white rounded-lg shadow-sm p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Registrations by Unit</h3>
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Registrations by Unit</h3>
                 <div className="h-80">
                     <ResponsiveContainer width="100%" height="100%">
                         <BarChart
@@ -467,9 +467,9 @@ export default function AdminDashboard() {
             </div>
 
             {/* SECTION 7: RECENT REGISTRATIONS */}
-            <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-                <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
-                    <h3 className="text-lg font-semibold text-gray-900">Recent Registrations</h3>
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm overflow-hidden">
+                <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Recent Registrations</h3>
                     <Link to="/admin/registrations" className="text-sm text-indigo-600 hover:text-indigo-900 font-medium">
                         View All
                     </Link>
@@ -500,16 +500,16 @@ export default function AdminDashboard() {
                                         </div>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap">
-                                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${reg.mode_of_participation === 'online' ? 'bg-orange-100 text-orange-800' : 'bg-green-100 text-green-800'
+                                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${reg.participation_mode === 'Online' ? 'bg-orange-100 text-orange-800' : 'bg-green-100 text-green-800'
                                             }`}>
-                                            {reg.mode_of_participation}
+                                            {reg.participation_mode}
                                         </span>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                        {reg.mode_of_participation === 'onsite' ? (
-                                            <span className={`flex items-center ${reg.location === 'outside_zaria' ? 'text-blue-600' : 'text-gray-600'}`}>
+                                        {reg.participation_mode === 'Onsite' ? (
+                                            <span className={`flex items-center ${reg.location_type === 'Outside Zaria' ? 'text-blue-600' : 'text-gray-600'}`}>
                                                 <MapPin size={14} className="mr-1" />
-                                                {reg.location === 'outside_zaria' ? 'Outside Zaria' : 'Within Zaria'}
+                                                {reg.location_type === 'Outside Zaria' ? 'Outside Zaria' : 'Within Zaria'}
                                             </span>
                                         ) : '-'}
                                     </td>
@@ -527,8 +527,8 @@ export default function AdminDashboard() {
             </div>
 
             {/* SECTION 8: ALERTS & NOTIFICATIONS */}
-            <div className="bg-white rounded-lg shadow-sm p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">System Alerts</h3>
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">System Alerts</h3>
                 <div className="space-y-3">
                     {metrics.pendingSupport > 5 && (
                         <div className="flex items-center p-4 bg-red-50 rounded-lg border border-red-100">
@@ -574,7 +574,7 @@ function MetricCard({ title, value, icon: Icon, color, trend, percentage, progre
     };
 
     return (
-        <div className={`bg-white rounded-lg shadow-sm p-6 border-l-4 ${alert ? 'border-red-500' : `border-${color}-500`}`}>
+        <div className={`bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 border-l-4 ${alert ? 'border-red-500' : `border-${color}-500`}`}>
             <div className="flex items-center justify-between mb-4">
                 <div className={`p-2 rounded-lg ${colors[color]}`}>
                     <Icon size={24} />
@@ -586,8 +586,8 @@ function MetricCard({ title, value, icon: Icon, color, trend, percentage, progre
                     </span>
                 )}
             </div>
-            <h3 className="text-gray-500 text-sm font-medium">{title}</h3>
-            <p className="text-2xl font-bold text-gray-900 mt-1">{value}</p>
+            <h3 className="text-gray-500 dark:text-gray-400 text-sm font-medium">{title}</h3>
+            <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">{value}</p>
             {subtext && <p className={`text-xs mt-1 ${alert ? 'text-red-500 font-medium' : 'text-gray-400'}`}>{subtext}</p>}
 
             {progressBar && (

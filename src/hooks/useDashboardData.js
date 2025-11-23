@@ -81,8 +81,8 @@ export function useDashboardData() {
 
             // Calculate Metrics
             const totalRegistrations = registrations?.length || 0;
-            const onlineCount = registrations?.filter(r => r.mode_of_participation === 'online').length || 0;
-            const onsiteCount = registrations?.filter(r => r.mode_of_participation === 'onsite').length || 0;
+            const onlineCount = registrations?.filter(r => r.participation_mode === 'Online').length || 0;
+            const onsiteCount = registrations?.filter(r => r.participation_mode === 'Onsite').length || 0;
             const pendingSupport = supportRequests?.length || 0;
 
             // Recent Registrations (last 10)
@@ -98,15 +98,15 @@ export function useDashboardData() {
                     const date = new Date(curr.created_at).toISOString().split('T')[0];
                     if (!acc[date]) acc[date] = { date, online: 0, onsite: 0, total: 0 };
                     acc[date].total += 1;
-                    if (curr.mode_of_participation === 'online') acc[date].online += 1;
-                    if (curr.mode_of_participation === 'onsite') acc[date].onsite += 1;
+                    if (curr.participation_mode === 'Online') acc[date].online += 1;
+                    if (curr.participation_mode === 'Onsite') acc[date].onsite += 1;
                     return acc;
                 }, {});
 
             const registrationTrends = Object.values(trendData || {}).sort((a, b) => new Date(a.date) - new Date(b.date));
 
             // Accommodation Stats
-            const onsiteRegs = registrations?.filter(r => r.mode_of_participation === 'onsite') || [];
+            const onsiteRegs = registrations?.filter(r => r.participation_mode === 'Onsite') || [];
             // Assuming database has accommodation_type which could be 'General', 'Hotel' or null/empty
             // Adjust field names if your DB is different (e.g. accommodation_type vs accommodation)
             const generalAccom = onsiteRegs.filter(r => r.accommodation_type === 'General').length;
@@ -124,7 +124,7 @@ export function useDashboardData() {
             }, {});
 
             // Meal Stats (Outside Zaria only)
-            const outsideZariaAttendees = onsiteRegs.filter(r => r.location === 'outside_zaria');
+            const outsideZariaAttendees = onsiteRegs.filter(r => r.location_type === 'Outside Zaria');
             const totalAttendeesWithMeals = outsideZariaAttendees.length;
             const totalMeals = totalAttendeesWithMeals * 3 * 7; // Placeholder logic
             const avgPerDay = totalMeals / 7;
@@ -145,8 +145,8 @@ export function useDashboardData() {
                 .sort((a, b) => b.count - a.count);
 
             // Location Stats
-            const withinZaria = onsiteRegs.filter(r => r.location === 'within_zaria').length;
-            const outsideZaria = onsiteRegs.filter(r => r.location === 'outside_zaria').length;
+            const withinZaria = onsiteRegs.filter(r => r.location_type === 'Within Zaria').length;
+            const outsideZaria = onsiteRegs.filter(r => r.location_type === 'Outside Zaria').length;
 
             const byNationality = registrations?.reduce((acc, curr) => {
                 const nat = curr.nationality || 'Unknown';
@@ -161,7 +161,7 @@ export function useDashboardData() {
 
             // Unit Stats
             const byUnit = registrations?.reduce((acc, curr) => {
-                const unit = curr.unit || 'None';
+                const unit = curr.church_unit || 'None';
                 acc[unit] = (acc[unit] || 0) + 1;
                 return acc;
             }, {});
